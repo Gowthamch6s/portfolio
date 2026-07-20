@@ -1,0 +1,60 @@
+import { useEffect, useState } from 'react';
+import Navbar from './components/Navbar.jsx';
+import GlowOrbs from './components/GlowOrbs.jsx';
+import Hero from './components/Hero.jsx';
+import About from './components/About.jsx';
+import Skills from './components/Skills.jsx';
+import Projects from './components/Projects.jsx';
+import Experience from './components/Experience.jsx';
+import Photography from './components/Photography.jsx';
+import Contact from './components/Contact.jsx';
+import GameModeButton from './components/GameModeButton.jsx';
+import FloatingCompanion from './components/FloatingCompanion.jsx';
+import TrailConnector from './components/TrailConnector.jsx';
+
+export default function App() {
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('portfolio-theme') || 'dark'
+  );
+  const [muted, setMuted] = useState(
+    () => localStorage.getItem('portfolio-muted') === 'true'
+  );
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('portfolio-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('portfolio-muted', String(muted));
+  }, [muted]);
+
+  return (
+    <div className="relative min-h-screen">
+      <GlowOrbs />
+      <Navbar
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+        muted={muted}
+        onToggleMuted={() => setMuted((m) => !m)}
+      />
+      <main className="relative z-10">
+        <Hero />
+        <TrailConnector fromRight toRight={false} />
+        <About />
+        <TrailConnector fromRight={false} toRight />
+        <Skills />
+        <TrailConnector fromRight toRight={false} />
+        <Projects />
+        <TrailConnector fromRight={false} toRight />
+        <Experience />
+        <TrailConnector fromRight toRight={false} />
+        <Photography />
+        <TrailConnector fromRight={false} toRight />
+        <Contact />
+      </main>
+      <FloatingCompanion muted={muted} />
+      <GameModeButton />
+    </div>
+  );
+}
