@@ -11,13 +11,15 @@ const PROJECTS = [
     gradient: 'linear-gradient(135deg, #7c3aed, #4f46e5 60%, #1e1b4b)',
   },
   {
-    title: 'AI Career Coach — RAG Resume Analyzer',
+    title: 'AI Career Copilot — Agentic RAG System',
     blurb:
-      'End-to-end RAG pipeline that pinpoints the skill gap between a resume and a target role — sentence-transformer embeddings in FAISS, a LangChain prompt chain, and a Llama 3-generated learning roadmap. Deployed live on Hugging Face Spaces.',
-    tech: ['LangChain', 'FAISS', 'FastAPI', 'Gradio', 'HF Spaces'],
-    stat: '🔴 Live on Hugging Face Spaces',
+      'A LangGraph agent that retrieves live job postings, grounds a gap analysis in the actual resume and job text, then grades its own output on faithfulness/specificity/relevance and automatically retries if it fails its own bar. Backed by a reproducible offline eval suite, not just an asserted quality number.',
+    tech: ['LangGraph', 'FastAPI', 'FAISS', 'Groq', 'React', 'Adzuna API'],
+    stat: '100% eval faithfulness · self-critiquing agent',
     emoji: '🎯',
     gradient: 'linear-gradient(135deg, #0ea5e9, #0891b2 60%, #164e63)',
+    link: 'https://gowtham00007-ai-career-coach.hf.space',
+    linkLabel: 'Live demo →',
   },
   {
     title: 'AI/ML Visual Defect Inspection System',
@@ -86,6 +88,16 @@ export default function Projects() {
                       </span>
                     ))}
                   </div>
+                  {p.link && (
+                    <a
+                      href={p.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-5 inline-flex items-center gap-1 text-sm font-semibold gradient-text w-fit"
+                    >
+                      {p.linkLabel || 'View →'}
+                    </a>
+                  )}
                 </div>
               </article>
             </Reveal>
