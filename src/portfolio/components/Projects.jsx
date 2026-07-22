@@ -9,6 +9,8 @@ const PROJECTS = [
     stat: '91% summary quality · 500+ pages',
     emoji: '📄',
     gradient: 'linear-gradient(135deg, #7c3aed, #4f46e5 60%, #1e1b4b)',
+    link: 'https://github.com/Gowthamch6s/ai-assistant',
+    linkLabel: 'View on GitHub →',
   },
   {
     title: 'AI Career Copilot — Agentic RAG System',
@@ -29,6 +31,8 @@ const PROJECTS = [
     stat: '96.4% accuracy · <100ms inference',
     emoji: '🏭',
     gradient: 'linear-gradient(135deg, #f97316, #dc2626 60%, #7c2d12)',
+    link: 'https://github.com/Gowthamch6s/ai-ml-inspection-system',
+    linkLabel: 'View on GitHub →',
   },
   {
     title: 'AI-Powered Offline Document Q&A Assistant',
@@ -38,6 +42,8 @@ const PROJECTS = [
     stat: '88% relevance · <2s answers',
     emoji: '🔎',
     gradient: 'linear-gradient(135deg, #10b981, #059669 60%, #064e3b)',
+    link: 'https://github.com/Gowthamch6s/offline-document-assistant',
+    linkLabel: 'View on GitHub →',
   },
 ];
 
