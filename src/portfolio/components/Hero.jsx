@@ -18,7 +18,7 @@ export default function Hero() {
             className="text-sm font-semibold tracking-[0.25em] uppercase mb-5"
             style={{ color: 'var(--accent)' }}
           >
-            AI / ML Engineer · LLMs &amp; RAG Systems · NLP
+            Agentic AI &amp; Generative AI Engineer · LLMs, RAG
           </motion.p>
 
           <motion.h1

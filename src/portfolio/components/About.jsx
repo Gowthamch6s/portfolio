@@ -27,8 +27,8 @@ export default function About() {
                 own an AI feature from data to deployed interface without a hand-off.
               </p>
               <p className="text-lg leading-relaxed mt-5" style={{ color: 'var(--text-muted)' }}>
-                Currently seeking <strong style={{ color: 'var(--text)' }}>AI Engineer, ML
-                Engineer, or Applied LLM roles</strong>. Authorized to work in the US (OPT).
+                Currently seeking <strong style={{ color: 'var(--text)' }}>Agentic AI, Generative
+                AI, or ML Engineer roles</strong>. Authorized to work in the US (OPT).
               </p>
             </div>
           </Reveal>
@@ -37,7 +37,7 @@ export default function About() {
             <div className="glass glass-hover rounded-3xl p-8 h-full flex flex-col justify-center gap-6">
               {[
                 ['🎓', 'MS CS @ USF · GPA 3.50'],
-                ['🧠', 'LLM & RAG systems builder'],
+                ['🧠', 'Agentic AI & RAG systems builder'],
                 ['🔬', 'Neural-symbolic AI research'],
                 ['🚀', 'Model → UI, end to end'],
               ].map(([icon, label]) => (

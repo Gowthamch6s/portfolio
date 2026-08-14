@@ -8,11 +8,11 @@ const SKILL_GROUPS = [
   },
   {
     label: 'LLM & Agents',
-    skills: ['LangChain', 'LlamaIndex', 'Pinecone', 'ChromaDB', 'Prompt Engineering', 'OpenAI API', 'Ollama', 'Gradio'],
+    skills: ['LangChain', 'LangGraph', 'LlamaIndex', 'Pinecone', 'ChromaDB', 'Prompt Engineering', 'OpenAI API', 'Groq', 'Ollama', 'E2B'],
   },
   {
     label: 'Languages',
-    skills: ['Python', 'JavaScript', 'SQL', 'Bash', 'Java', 'C++', 'HTML / CSS'],
+    skills: ['Python', 'JavaScript', 'TypeScript', 'SQL', 'Bash', 'Java', 'C++'],
   },
   {
     label: 'Backend & MLOps',
@@ -20,11 +20,11 @@ const SKILL_GROUPS = [
   },
   {
     label: 'Frontend & UX',
-    skills: ['React.js', 'REST API Integration', 'Figma', 'Responsive Design'],
+    skills: ['React.js', 'Next.js', 'REST APIs', 'Figma', 'Responsive Design'],
   },
   {
     label: 'Certifications',
-    skills: ['Azure AI-900', 'Oracle Java SE 8', 'ServiceNow CSA'],
+    skills: ['Azure AI-900', 'Azure Fundamentals'],
   },
 ];
 

@@ -29,9 +29,9 @@ export default function Contact() {
             <div className="glass rounded-3xl p-8 sm:p-10 h-full flex flex-col justify-between gap-8">
               <div>
                 <p className="text-lg leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                  Hiring for AI Engineer, ML Engineer, or Applied LLM roles — or just want to
-                  talk shop about RAG pipelines and local LLMs? My inbox is open.
-                  Palm Bay, FL · gowthamch6s@gmail.com
+                  Hiring for Agentic AI, Generative AI, or ML Engineer roles — or just want to
+                  talk shop about LangGraph agents and RAG pipelines? My inbox is open.
+                  Tampa, FL · gowthamch6s@gmail.com
                 </p>
               </div>
               <div className="flex flex-col gap-4">
@@ -44,7 +44,7 @@ export default function Contact() {
                   <span aria-hidden="true">🐙</span> GitHub
                 </a>
                 <a
-                  href="https://www.linkedin.com/in/1gs/"
+                  href="https://www.linkedin.com/in/gowthamchimmana"
                   target="_blank"
                   rel="noreferrer"
                   className="btn-secondary rounded-2xl px-6 py-4 font-semibold flex items-center gap-3"

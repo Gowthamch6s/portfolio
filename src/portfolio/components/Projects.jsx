@@ -2,6 +2,19 @@ import Reveal from './Reveal.jsx';
 
 const PROJECTS = [
   {
+    title: 'AgentFlow Studio — Autonomous AI Agent System',
+    blurb:
+      'A self-correcting 5-node LangGraph state machine (plan → execute → sandbox → evaluate → report) with human-in-the-loop approval checkpoints on LangGraph’s interrupt() — durably resuming from the exact paused step, even after a process restart. All LLM-generated code runs isolated in per-thread E2B sandboxes with enforced timeouts, streamed end-to-end via FastAPI SSE to a Next.js dashboard.',
+    tech: ['LangGraph', 'FastAPI', 'PostgreSQL', 'E2B', 'Next.js', 'Docker'],
+    stat: 'Human-in-the-loop · self-correcting',
+    emoji: '🤖',
+    gradient: 'linear-gradient(135deg, #6366f1, #4338ca 60%, #1e1b4b)',
+    link: 'https://github.com/Gowthamch6s/AgentFlow-Studio',
+    linkLabel: 'View on GitHub →',
+    secondaryLink: 'https://github.com/Gowthamch6s/agent-observability-kit',
+    secondaryLabel: 'Built agent-observability-kit ↗',
+  },
+  {
     title: 'LLM Technical Document Validation Assistant',
     blurb:
       'Fully offline AI summarization for confidential specs — a map-reduce pipeline feeding locally-hosted Llama 3 through LangChain. Sub-8-second summaries on 500+ page documents, 91% user-rated quality, zero data leaving the org.',
@@ -15,9 +28,9 @@ const PROJECTS = [
   {
     title: 'AI Career Copilot — Agentic RAG System',
     blurb:
-      'A LangGraph agent that retrieves live job postings, grounds a gap analysis in the actual resume and job text, then grades its own output on faithfulness/specificity/relevance and automatically retries if it fails its own bar. Backed by a reproducible offline eval suite, not just an asserted quality number.',
+      'A multi-step LangGraph agent: retrieve live job postings (Adzuna API) → match role via embedding similarity → ground analysis in retrieved job text (FAISS) → generate → self-critique → conditionally regenerate. An independent MLflow-tracked LLM-judge pass — separate from the graph’s own in-graph critique — catches regressions a self-graded agent would miss.',
     tech: ['LangGraph', 'FastAPI', 'FAISS', 'Groq', 'React', 'Adzuna API'],
-    stat: '100% eval faithfulness · self-critiquing agent',
+    stat: '100% eval pass · 1.0 avg faithfulness',
     emoji: '🎯',
     gradient: 'linear-gradient(135deg, #0ea5e9, #0891b2 60%, #164e63)',
     link: 'https://gowtham00007-ai-career-coach.hf.space',
@@ -102,6 +115,17 @@ export default function Projects() {
                       className="mt-5 inline-flex items-center gap-1 text-sm font-semibold gradient-text w-fit"
                     >
                       {p.linkLabel || 'View →'}
+                    </a>
+                  )}
+                  {p.secondaryLink && (
+                    <a
+                      href={p.secondaryLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold w-fit"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      {p.secondaryLabel || 'Related repo ↗'}
                     </a>
                   )}
                 </div>
