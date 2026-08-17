@@ -4,25 +4,44 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alpine Portfolio — Ski Run</title>
+    <title>Treasure Run — Gowtham Sai Chimmana</title>
   </head>
   <body>
     <div id="app"></div>
 
-    <div id="profile-card">
-      <div id="profile-text">
-        <div id="profile-name">Gowtham Sai Chimmana</div>
-        <div id="profile-tagline">AI/ML Engineer · LLMs &amp; RAG Systems</div>
-      </div>
-      <div id="profile-avatar">GC</div>
-    </div>
-
-    <div id="hud"></div>
-
-    <div id="shop-overlay"></div>
-
     <a id="exit-game" href="/">← Exit to Portfolio</a>
 
-    <script type="module" src="/src/main.js"></script>
+    <div id="top-hud">🚤 W/S throttle · A/D steer · dock at an island and press E · find the treasure</div>
+
+    <div id="interact-prompt"></div>
+    <div id="treasure-toast"></div>
+
+    <div id="console">
+      <div id="console-panel">
+        <canvas id="console-map"></canvas>
+        <canvas id="console-compass"></canvas>
+        <div id="console-readouts">
+          <div>SPEED<br /><span id="speed-readout">0 kn</span></div>
+          <div>HEADING<br /><span id="heading-readout">N</span></div>
+        </div>
+        <div id="daynight-toggle">
+          <span class="label day">DAY</span>
+          <div class="track"><div class="knob"></div></div>
+          <span class="label night">NIGHT</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="touch-controls">
+      <button id="touch-left">◀</button>
+      <button id="touch-throttle">▲</button>
+      <button id="touch-right">▶</button>
+    </div>
+
+    <div id="panel-overlay">
+      <div id="panel-card"></div>
+    </div>
+
+    <script type="module" src="/src/ocean/main.js"></script>
   </body>
 </html>

@@ -54,7 +54,7 @@ export default function Navbar({ theme, onToggleTheme, muted, onToggleMuted }) {
             href="/game.html"
             className="btn-primary hidden sm:inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
           >
-            <span aria-hidden="true">🎮</span> 3D Game Mode
+            <span aria-hidden="true">🚤</span> Treasure Hunt
           </a>
         </div>
       </nav>
