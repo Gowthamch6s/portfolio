@@ -48,14 +48,14 @@ const PROJECTS = [
     linkLabel: 'View on GitHub →',
   },
   {
-    title: 'AI-Powered Offline Document Q&A Assistant',
+    title: 'Autonomous Market Intelligence & Startup Validator',
     blurb:
-      'GPU-free, internet-free document Q&A for field engineers — keyword scoring, phrase matching, and query expansion answer natural-language questions from 300-page manuals in under 2 seconds, at 88% answer relevance.',
-    tech: ['Python', 'PyMuPDF', 'NLP', 'Keyword Scoring'],
-    stat: '88% relevance · <2s answers',
-    emoji: '🔎',
+      'A cyclic multi-agent LangGraph pipeline: parallel Scout agents gather live competitor and community-sentiment data via Tavily search, a Gap-Analysis critic loops the research back for another pass via conditional edges until it clears a sufficiency bar (capped by a max-iteration safety limit), then a Synthesis agent compiles a citation-backed Markdown feasibility report — every LLM call schema-validated with Pydantic structured output.',
+    tech: ['LangGraph', 'Tavily', 'Streamlit', 'Pydantic', 'Python'],
+    stat: 'Cyclic graph · self-critiquing research loop',
+    emoji: '🧭',
     gradient: 'linear-gradient(135deg, #10b981, #059669 60%, #064e3b)',
-    link: 'https://github.com/Gowthamch6s/offline-document-assistant',
+    link: 'https://github.com/Gowthamch6s/market-research-agent',
     linkLabel: 'View on GitHub →',
   },
 ];
