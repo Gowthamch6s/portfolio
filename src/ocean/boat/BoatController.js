@@ -10,7 +10,7 @@ const WATER_DRAG = 3.2; // constant drag toward 0 — makes the boat coast to a 
 const TURN_RATE = 1.7; // rad/s at full speed
 const MIN_TURN_SPEED_FACTOR = 0.18; // boats barely steer sitting still — needs some speed to bite
 
-const WORLD_HALF = 2600; // soft boundary — ocean plane is much bigger than the playable route
+const WORLD_HALF = 1400; // soft boundary — keeps the boat within the ocean plane (size 3000)
 
 export class BoatController {
   constructor(scene) {
@@ -73,7 +73,11 @@ export class BoatController {
     const turnAvailable = MIN_TURN_SPEED_FACTOR + speed01 * (1 - MIN_TURN_SPEED_FACTOR);
     this.turnInput = damp(this.turnInput, input.turn, 8, dt);
     const turnDir = this.speed < 0 ? -1 : 1; // reversing flips steering, like a real boat
-    this.heading += this.turnInput * TURN_RATE * turnAvailable * turnDir * dt;
+    // Negative sign: with dir=(sin(heading),cos(heading)), increasing heading
+    // rotates the facing vector toward +X, which reads as turning LEFT from
+    // the driver's seat, not right — so a positive (D/right) turn input
+    // needs to DECREASE heading. Confirmed backwards in testing before this fix.
+    this.heading -= this.turnInput * TURN_RATE * turnAvailable * turnDir * dt;
 
     const dirX = Math.sin(this.heading);
     const dirZ = Math.cos(this.heading);
@@ -102,12 +106,12 @@ export class BoatController {
     this.mesh.rotation.y = this.heading;
 
     const targetPitch = -speed01 * 0.14 * Math.sign(forward || 1) + Math.sin(this.clock * 1.7) * 0.015;
-    const targetRoll = -this.turnInput * 0.22;
+    const targetRoll = this.turnInput * 0.22;
     this.mesh.rotation.x = damp(this.mesh.rotation.x || 0, targetPitch, 5, dt || 1 / 60);
     this.mesh.rotation.z = damp(this.mesh.rotation.z || 0, targetRoll, 6, dt || 1 / 60);
 
     if (this.outboard) {
-      this.outboard.rotation.y = damp(this.outboard.rotation.y || 0, -this.turnInput * 0.5, 8, dt || 1 / 60);
+      this.outboard.rotation.y = damp(this.outboard.rotation.y || 0, this.turnInput * 0.5, 8, dt || 1 / 60);
     }
   }
 

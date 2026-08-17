@@ -43,8 +43,45 @@ function buildWaterNormalTexture(size = 512) {
   return texture;
 }
 
-export function createOcean(size = 6000) {
-  const geometry = new THREE.PlaneGeometry(size, size, 1, 1);
+// Water.js's built-in "waves" are purely a normal-map illusion on a flat
+// plane — convincing in close-up ripples but reads as dead-flat from any
+// distance or grazing angle. This injects real vertex displacement (layered
+// sine swells) into its vertex shader via onBeforeCompile, so the surface
+// itself actually rises and falls. The geometry needs enough segments for
+// the displacement to be visible, hence the fairly dense subdivision below
+// (still cheap next to the ski game's old terrain mesh).
+function addWaveDisplacement(material) {
+  material.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader.replace(
+      'varying vec4 mirrorCoord;\n\t\t\t\tvarying vec4 worldPosition;',
+      `varying vec4 mirrorCoord;
+				varying vec4 worldPosition;
+
+				float oceanWaveHeight(vec2 p) {
+					return sin(p.x * 0.045 + time * 0.7) * 0.9
+						+ sin(p.y * 0.07 - time * 0.55) * 0.6
+						+ sin((p.x + p.y) * 0.025 + time * 0.35) * 1.1
+						+ sin((p.x - p.y) * 0.09 + time * 1.1) * 0.25;
+				}`
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      `mirrorCoord = modelMatrix * vec4( position, 1.0 );
+					worldPosition = mirrorCoord.xyzw;
+					mirrorCoord = textureMatrix * mirrorCoord;
+					vec4 mvPosition =  modelViewMatrix * vec4( position, 1.0 );`,
+      `vec3 displacedPosition = position;
+					displacedPosition.z += oceanWaveHeight(position.xy);
+					mirrorCoord = modelMatrix * vec4( displacedPosition, 1.0 );
+					worldPosition = mirrorCoord.xyzw;
+					mirrorCoord = textureMatrix * mirrorCoord;
+					vec4 mvPosition =  modelViewMatrix * vec4( displacedPosition, 1.0 );`
+    );
+  };
+  material.needsUpdate = true;
+}
+
+export function createOcean(size = 3000, segments = 160) {
+  const geometry = new THREE.PlaneGeometry(size, size, segments, segments);
   const normalMap = buildWaterNormalTexture();
 
   const water = new Water(geometry, {
@@ -59,6 +96,7 @@ export function createOcean(size = 6000) {
   });
   water.rotation.x = -Math.PI / 2;
   water.material.uniforms.size.value = 3.2;
+  addWaveDisplacement(water.material);
 
   return water;
 }
