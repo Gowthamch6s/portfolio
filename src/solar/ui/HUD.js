@@ -1,10 +1,11 @@
 // Drives every DOM element in the overlay: progress/objective panel,
-// interact prompt, treasure/discovery toast, content reveal panel, and the
-// quality/mute/back controls.
+// node-graph minimap, interact prompt, discovery toast, content reveal
+// panel, and the quality/mute controls.
 export class HUD {
-  constructor({ totalNodes, onToggleMute, onQualityChange }) {
+  constructor({ totalNodes, districts, onToggleMute, onQualityChange }) {
     this.totalNodes = totalNodes;
     this.visitedNodes = new Set();
+    this.districts = districts;
 
     this.progressBar = document.getElementById('progress-bar');
     this.progressLabel = document.getElementById('progress-label');
@@ -16,6 +17,8 @@ export class HUD {
     this.panelCard = document.getElementById('panel-card');
     this.muteBtn = document.getElementById('mute-toggle');
     this.qualitySelect = document.getElementById('quality-select');
+    this.mapCanvas = document.getElementById('node-map');
+    this.mapCtx = this.mapCanvas.getContext('2d');
     this._toastTimeout = null;
 
     this.muteBtn.addEventListener('click', () => {
@@ -25,7 +28,59 @@ export class HUD {
     });
     this.qualitySelect.addEventListener('change', () => onQualityChange(this.qualitySelect.value));
 
+    this._resizeMap();
+    window.addEventListener('resize', () => this._resizeMap());
     this._updateProgress();
+  }
+
+  _resizeMap() {
+    const rect = this.mapCanvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.mapCanvas.width = Math.max(1, rect.width * dpr);
+    this.mapCanvas.height = Math.max(1, rect.height * dpr);
+  }
+
+  // A small node-graph — spawn hub in the middle, one node per district
+  // connected back to it, player position as a moving dot — echoing the
+  // reference game's minimap widget instead of a literal terrain render.
+  updateMap(spawnPos, playerPosition) {
+    const ctx = this.mapCtx;
+    const w = this.mapCanvas.width;
+    const h = this.mapCanvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const scale = Math.min(w, h) / 340;
+    const toMap = (x, z) => [w / 2 + (x - spawnPos.x) * scale, h / 2 + (z - spawnPos.z) * scale];
+
+    const [hx, hy] = toMap(spawnPos.x, spawnPos.z);
+    ctx.strokeStyle = 'rgba(139,92,246,0.4)';
+    ctx.lineWidth = 1.5;
+    for (const d of this.districts) {
+      const [dx, dy] = toMap(d.position.x, d.position.z);
+      ctx.beginPath();
+      ctx.moveTo(hx, hy);
+      ctx.lineTo(dx, dy);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#ffe8b0';
+    ctx.beginPath();
+    ctx.arc(hx, hy, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (const d of this.districts) {
+      const [dx, dy] = toMap(d.position.x, d.position.z);
+      ctx.fillStyle = `#${d.color.toString(16).padStart(6, '0')}`;
+      ctx.beginPath();
+      ctx.arc(dx, dy, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const [px, py] = toMap(playerPosition.x, playerPosition.z);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   setObjective(text) {
@@ -82,14 +137,14 @@ export class HUD {
     if (closeBtn) closeBtn.addEventListener('click', () => this.closePanel());
   }
 
-  showPlanetIntro(planetData) {
+  showDistrictIntro(districtData) {
     this.panelCard.innerHTML = `
-      <div class="icon">🪐</div>
-      <h2>${planetData.name}</h2>
-      <div class="subtitle">${planetData.theme}</div>
-      <p>Explore the surface and approach a glowing monument to see what's here.</p>
+      <div class="icon">📍</div>
+      <h2>${districtData.name}</h2>
+      <div class="subtitle">${districtData.theme}</div>
+      <p>A new district is coming online. Approach a glowing monument and press E.</p>
       <div class="actions">
-        <button class="btn close" data-close>Land</button>
+        <button class="btn close" data-close>Explore</button>
       </div>
     `;
     this.panelOverlay.classList.add('visible');

@@ -1,39 +1,79 @@
 import * as THREE from 'three';
 import './style.css';
 import { createRenderer, createCamera, setupResize, createStarfield } from './core/SceneSetup.js';
-import { buildSolarSystem, updateSolarSystem } from './map/SolarSystemScene.js';
-import { buildTinyPlanet, decoratePlanet, placeContentNodes } from './planet/TinyPlanetWorld.js';
+import { buildTerrain } from './world/Terrain.js';
+import { DISTRICTS, SPAWN_POSITION, buildFlattenZones } from './world/DistrictLayout.js';
+import { decorateWorld, placeDistrictNodes } from './world/DistrictDecoration.js';
+import { WorldCharacterController } from './character/WorldCharacterController.js';
+import { WorldCamera } from './character/WorldCamera.js';
 import { spawnLifeForms } from './environment/LifeForms.js';
-import { CharacterController } from './character/CharacterController.js';
-import { PlanetCamera } from './character/PlanetCamera.js';
+import { buildHeroPlanet } from './intro/HeroPlanet.js';
 import { HUD } from './ui/HUD.js';
 import { SolarAudio } from './audio/SolarAudio.js';
 import { InputManager } from '../input/InputManager.js';
-import { PLANETS } from './data/planetsData.js';
 
 const canvas = document.createElement('canvas');
 canvas.id = 'scene';
 document.getElementById('app').appendChild(canvas);
 
-// Where the character always lands on a planet, and where the road/node
-// placement anchor themselves relative to — kept slightly off the exact
-// pole so the tangent-frame math in CharacterController never degenerates.
-const SPAWN_DIR = new THREE.Vector3(0, 1, 0.05).normalize();
-
 const renderer = createRenderer(canvas);
 const camera = createCamera();
 setupResize(camera, renderer);
 
-const overviewScene = new THREE.Scene();
-overviewScene.add(createStarfield());
-const solarSystem = buildSolarSystem(overviewScene);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x03040c);
+scene.fog = new THREE.FogExp2(0x1a2438, 0.0035);
+scene.add(createStarfield(2200, 1400));
+
+scene.add(new THREE.HemisphereLight(0xbfd6ff, 0x2a3a2a, 0.9));
+const sun = new THREE.DirectionalLight(0xfff2d8, 2.4);
+sun.position.set(60, 90, 40);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -160;
+sun.shadow.camera.right = 160;
+sun.shadow.camera.top = 160;
+sun.shadow.camera.bottom = -160;
+sun.shadow.camera.far = 400;
+scene.add(sun);
+scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+
+// --- the one well-established "home" planet, seen only during the space
+// intro — the world you actually walk on is the flat terrain below. ---
+const PLANET_POSITION = new THREE.Vector3(0, -20, -260);
+const heroPlanet = buildHeroPlanet(120);
+heroPlanet.group.position.copy(PLANET_POSITION);
+scene.add(heroPlanet.group);
+
+// --- the walkable world: ONE continuous terrain, districts as zones on it,
+// matching the reference game's single connected map exactly. Hidden until
+// the landing cinematic reveals it. ---
+const worldRoot = new THREE.Group();
+worldRoot.visible = false;
+scene.add(worldRoot);
+
+const flattenZones = buildFlattenZones();
+worldRoot.add(buildTerrain(420, 180, flattenZones));
+decorateWorld(worldRoot, SPAWN_POSITION, DISTRICTS);
+
+const allNodes = [];
+for (const district of DISTRICTS) {
+  const nodes = placeDistrictNodes(worldRoot, district);
+  for (const n of nodes) allNodes.push({ ...n, district });
+}
+
+const character = new WorldCharacterController(worldRoot, flattenZones);
+character.spawnAt(SPAWN_POSITION.x, SPAWN_POSITION.z);
+const worldCamera = new WorldCamera(camera);
+
+const lifeForms = spawnLifeForms(worldRoot, DISTRICTS, SPAWN_POSITION);
 
 const input = new InputManager();
 const audio = new SolarAudio();
 
-const totalNodes = PLANETS.reduce((sum, p) => sum + p.nodes.length, 0);
 const hud = new HUD({
-  totalNodes,
+  totalNodes: allNodes.length,
+  districts: DISTRICTS,
   onToggleMute: (muted) => audio.setMuted(muted),
   onQualityChange: (q) => applyQuality(q),
 });
@@ -42,74 +82,6 @@ function applyQuality(q) {
   const pr = { low: 1, medium: 1.4, high: 2, ultra: 2 }[q] ?? 1.4;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, pr));
   renderer.shadowMap.enabled = q !== 'low';
-}
-
-// --- mode state machine: 'overview' (solar system, click a planet) ->
-// 'flying' (camera transition) -> 'planet' (walking a tiny-planet surface,
-// 'M' returns to 'overview'). One shared camera, two kinds of scenes: the
-// single overview scene, and one lazily-built+cached walkable scene per
-// planet (so revisiting a planet doesn't rebuild it or lose progress).
-let mode = 'overview';
-let activePlanet = null;
-const planetScenes = new Map();
-let flyProgress = 0;
-const flyFrom = new THREE.Vector3();
-
-camera.position.set(0, 70, 230);
-camera.up.set(0, 1, 0);
-camera.lookAt(0, 0, 0);
-
-const raycaster = new THREE.Raycaster();
-const pointerNDC = new THREE.Vector2();
-renderer.domElement.addEventListener('click', (e) => {
-  if (mode !== 'overview' || hud.isPanelOpen) return;
-  pointerNDC.x = (e.clientX / window.innerWidth) * 2 - 1;
-  pointerNDC.y = -(e.clientY / window.innerHeight) * 2 + 1;
-  raycaster.setFromCamera(pointerNDC, camera);
-  const hits = raycaster.intersectObjects(solarSystem.planetMeshes.map((p) => p.body));
-  if (hits.length) {
-    const entry = solarSystem.planetMeshes.find((p) => p.body === hits[0].object);
-    if (entry) beginTravelTo(entry.data);
-  }
-});
-
-function getOrBuildPlanetScene(data) {
-  if (planetScenes.has(data.id)) return planetScenes.get(data.id);
-
-  const scene = new THREE.Scene();
-  scene.add(createStarfield(1500, 800));
-  scene.add(new THREE.HemisphereLight(0xbfd6ff, 0x1a1a2a, 0.85));
-  const sunLight = new THREE.DirectionalLight(0xfff2d8, 2.3);
-  sunLight.position.set(40, 60, 20);
-  sunLight.castShadow = true;
-  sunLight.shadow.mapSize.set(1024, 1024);
-  scene.add(sunLight);
-
-  const radius = 20;
-  const planetHandle = buildTinyPlanet(data, radius);
-  scene.add(planetHandle.group);
-  const nodes = placeContentNodes(planetHandle.group, data.nodes, radius, data.color);
-  decoratePlanet(planetHandle, radius, nodes.map((n) => n.dir), data.color, SPAWN_DIR);
-
-  const character = new CharacterController(scene, radius);
-  character.spawnAt(SPAWN_DIR);
-
-  const lifeForms = spawnLifeForms(scene, radius, planetHandle.rand, SPAWN_DIR);
-
-  const entry = { scene, character, planetCamera: new PlanetCamera(camera), nodes, radius, lifeForms, visited: false };
-  planetScenes.set(data.id, entry);
-  return entry;
-}
-
-function beginTravelTo(data) {
-  activePlanet = data;
-  mode = 'flying';
-  flyProgress = 0;
-  flyFrom.copy(camera.position);
-}
-
-function easeInOut(t) {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
 
 // touch controls just puppet the same InputManager key set the keyboard uses
@@ -127,14 +99,93 @@ function bindHoldButton(id, code) {
 }
 bindHoldButton('touch-left', 'KeyA');
 bindHoldButton('touch-right', 'KeyD');
+bindHoldButton('touch-boost', 'ShiftLeft');
 document.getElementById('touch-jump').addEventListener('pointerdown', (e) => {
   e.preventDefault();
   input.keys.add('Space');
 });
+// touch throttle is implicit — holding either turn button also walks forward,
+// matching a simple "always advancing" feel on mobile
+bindHoldButton('touch-left', 'KeyW');
+bindHoldButton('touch-right', 'KeyW');
 
 document.getElementById('panel-overlay').addEventListener('click', (e) => {
   if (e.target.id === 'panel-overlay') hud.closePanel();
 });
+
+// ---------------------------------------------------------------------
+// Landing cinematic: fly the camera in toward Terra, fade to black, swap
+// in the walkable world, fade back up, then strip the player's spacesuit
+// now that they're standing on a breathable planet.
+// ---------------------------------------------------------------------
+const introCaption = document.getElementById('intro-caption');
+const introFade = document.getElementById('intro-fade');
+const hudRoot = document.getElementById('progress-panel');
+const topBar = document.getElementById('top-bar');
+const bottomHud = document.getElementById('bottom-hud');
+const exitLink = document.getElementById('exit-game');
+const touchControls = document.getElementById('touch-controls');
+
+const FLIGHT_DURATION = 5.5;
+const FADE_DURATION = 0.7;
+const camSpaceStart = new THREE.Vector3(0, 90, 140);
+const camSpaceEnd = new THREE.Vector3(0, 24, -50);
+const lookTarget = PLANET_POSITION.clone();
+
+let introPhase = 'flight'; // 'flight' | 'fadeOut' | 'reveal' | 'fadeIn' | 'done'
+let phaseTime = 0;
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function runIntro(dt) {
+  phaseTime += dt;
+
+  if (introPhase === 'flight') {
+    const t = Math.min(phaseTime / FLIGHT_DURATION, 1);
+    const eased = easeInOutCubic(t);
+    camera.position.lerpVectors(camSpaceStart, camSpaceEnd, eased);
+    camera.up.set(0, 1, 0);
+    camera.lookAt(lookTarget);
+    heroPlanet.group.rotation.y += dt * 0.05;
+    heroPlanet.clouds.rotation.y += dt * 0.08;
+    if (t >= 1) {
+      introPhase = 'fadeOut';
+      phaseTime = 0;
+      introFade.classList.add('visible');
+    }
+    return;
+  }
+
+  if (introPhase === 'fadeOut') {
+    if (phaseTime >= FADE_DURATION) {
+      // swap scenes while the screen is fully black
+      worldRoot.visible = true;
+      introCaption.classList.remove('visible');
+      character.landOnPlanet();
+      hud.setObjective('Explore — approach a glowing district to begin a mission.');
+      introPhase = 'fadeIn';
+      phaseTime = 0;
+      introFade.classList.remove('visible');
+    }
+    return;
+  }
+
+  if (introPhase === 'fadeIn') {
+    if (phaseTime >= FADE_DURATION) {
+      introPhase = 'done';
+      hudRoot.classList.add('visible-ui');
+      topBar.classList.add('visible-ui');
+      bottomHud.classList.add('visible-ui');
+      exitLink.classList.add('visible-ui');
+      touchControls.classList.add('visible-ui');
+    }
+  }
+}
+
+// One-time "you're near a new district" reveal, tracked per district id.
+const enteredDistricts = new Set();
 
 const timer = new THREE.Timer();
 timer.connect(document);
@@ -143,73 +194,59 @@ function tick() {
   timer.update();
   const dt = Math.min(timer.getDelta(), 1 / 30);
 
-  if (mode === 'overview') {
-    updateSolarSystem(solarSystem, dt);
-    const t = performance.now() * 0.00003;
-    camera.position.set(Math.sin(t) * 230, 75, Math.cos(t) * 230);
-    camera.up.set(0, 1, 0);
-    camera.lookAt(0, 0, 0);
-    renderer.render(overviewScene, camera);
-  } else if (mode === 'flying') {
-    updateSolarSystem(solarSystem, dt);
-    flyProgress = Math.min(1, flyProgress + dt / 1.6);
-    const planetEntry = solarSystem.planetMeshes.find((p) => p.data.id === activePlanet.id);
-    const targetPos = planetEntry.group.position.clone().add(new THREE.Vector3(0, activePlanet.size * 1.5, activePlanet.size * 3.2));
-    camera.position.lerpVectors(flyFrom, targetPos, easeInOut(flyProgress));
-    camera.up.set(0, 1, 0);
-    camera.lookAt(planetEntry.group.position);
-    renderer.render(overviewScene, camera);
+  if (introPhase !== 'done') {
+    runIntro(dt);
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+    return;
+  }
 
-    if (flyProgress >= 1) {
-      mode = 'planet';
-      const entry = getOrBuildPlanetScene(activePlanet);
-      hud.setObjective(`Exploring ${activePlanet.name} — approach a glowing monument and press E.`);
-      if (!entry.visited) {
-        entry.visited = true;
-        hud.showPlanetIntro(activePlanet);
+  if (!hud.isPanelOpen) {
+    character.update(dt, { forward: input.forward, turn: input.turn, jump: input.consumeJump(), boost: input.boost });
+  }
+  lifeForms.update(dt, character.position);
+  worldCamera.update(dt, character);
+  hud.updateMap(SPAWN_POSITION, character.position);
+
+  if (!hud.isPanelOpen) {
+    // arriving at a new district for the first time
+    for (const district of DISTRICTS) {
+      if (enteredDistricts.has(district.id)) continue;
+      const d = Math.hypot(character.position.x - district.position.x, character.position.z - district.position.z);
+      if (d < district.clearRadius) {
+        enteredDistricts.add(district.id);
+        hud.setObjective(`Exploring ${district.name} — approach a glowing monument and press E.`);
+        hud.showDistrictIntro(district);
+        break;
       }
     }
-  } else if (mode === 'planet') {
-    const entry = planetScenes.get(activePlanet.id);
 
-    if (!hud.isPanelOpen) {
-      entry.character.update(dt, { forward: input.forward, turn: input.turn, jump: input.consumeJump() });
+    let nearest = null;
+    let nearestDist = Infinity;
+    for (const n of allNodes) {
+      const d = character.mesh.position.distanceTo(n.worldPos);
+      if (d < 3.5 && d < nearestDist) {
+        nearest = n;
+        nearestDist = d;
+      }
     }
-    entry.lifeForms.update(dt, entry.character.mesh.position);
-    entry.planetCamera.update(dt, entry.character);
-    renderer.render(entry.scene, camera);
-
-    if (!hud.isPanelOpen) {
-      let nearest = null;
-      let nearestDist = Infinity;
-      for (const n of entry.nodes) {
-        const d = entry.character.mesh.position.distanceTo(n.worldPos);
-        if (d < 3.5 && d < nearestDist) {
-          nearest = n;
-          nearestDist = d;
-        }
+    if (nearest) {
+      hud.showPrompt(`Press E — ${nearest.node.title}`);
+      if (input.consumeInteract()) {
+        hud.showNodePanel(nearest.node, `${nearest.district.id}:${nearest.node.title}`);
+        hud.showToast(`✦ Discovered: ${nearest.node.title}`);
+        audio.playDiscoveryChime();
       }
-      if (nearest) {
-        hud.showPrompt(`Press E — ${nearest.node.title}`);
-        if (input.consumeInteract()) {
-          hud.showNodePanel(nearest.node, `${activePlanet.id}:${nearest.node.title}`);
-          hud.showToast(`✦ Discovered: ${nearest.node.title}`);
-          audio.playDiscoveryChime();
-        }
-      } else {
-        hud.hidePrompt();
-        input.consumeInteract();
-      }
-
-      if (input.consumeMapToggle()) {
-        mode = 'overview';
-        hud.setObjective('Click a planet to travel there.');
-        hud.hidePrompt();
-      }
+    } else {
+      hud.hidePrompt();
+      input.consumeInteract();
     }
   }
 
+  renderer.render(scene, camera);
   requestAnimationFrame(tick);
 }
 
+camera.position.copy(camSpaceStart);
+camera.lookAt(lookTarget);
 requestAnimationFrame(tick);

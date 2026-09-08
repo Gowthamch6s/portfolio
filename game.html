@@ -4,14 +4,21 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Solar Explorer — Gowtham Sai Chimmana</title>
+    <title>World Explorer — Gowtham Sai Chimmana</title>
   </head>
   <body>
     <div id="app"></div>
 
+    <div id="intro-caption" class="visible">
+      <div class="planet-name">Terra</div>
+      <div class="planet-sub">Approaching a well-established world…</div>
+    </div>
+    <div id="intro-fade"></div>
+
     <a id="exit-game" href="/">← Exit to Portfolio</a>
 
     <div id="top-bar">
+      <canvas id="node-map"></canvas>
       <button id="mute-toggle">🔊</button>
       <select id="quality-select">
         <option value="low">Low</option>
@@ -25,16 +32,17 @@
       <div class="title"><span>PORTFOLIO RESTORATION</span><span id="progress-pct">0%</span></div>
       <div id="progress-track"><div id="progress-bar"></div></div>
       <div id="objective-label">OBJECTIVE</div>
-      <div id="objective-text">Click a planet to travel there.</div>
+      <div id="objective-text">Explore — approach a glowing district to begin a mission.</div>
       <div id="progress-label" style="display:none"></div>
     </div>
 
     <div id="interact-prompt"></div>
     <div id="discovery-toast"></div>
-    <div id="bottom-hud">🚀 Solar map: click a planet · On a planet: W/S move · A/D turn · Space jump · E interact · M back to map</div>
+    <div id="bottom-hud">🧑‍🚀 W/S move · A/D turn · Shift boost · Space jump · E interact</div>
 
     <div id="touch-controls">
       <button id="touch-left">◀</button>
+      <button id="touch-boost">⚡</button>
       <button id="touch-jump">▲</button>
       <button id="touch-right">▶</button>
     </div>

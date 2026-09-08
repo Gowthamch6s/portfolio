@@ -1,21 +1,40 @@
-import * as THREE from 'three';
 import { buildAstronaut } from '../character/Astronaut.js';
 import { buildAlien } from './Alien.js';
 import { buildSpacePet } from './SpacePet.js';
-import { SurfaceWanderer, randomSurfaceDir } from '../character/SurfaceWanderer.js';
+import { FlatWanderer } from '../character/FlatWanderer.js';
 
 const NPC_SUIT_COLORS = [0xffd27a, 0x8b5cf6, 0x22d3ee, 0xf472b6, 0x4ade80];
-const WANDER_SPEED = 2.4;
-const WANDER_TURN_RATE = 2.0;
-const ARRIVE_ANGLE = 0.08; // radians — "close enough" to a wander target
+const WANDER_SPEED = 2.6;
+const WANDER_TURN_RATE = 2.2;
+const ARRIVE_DIST = 1.2;
 
-class Wanderer {
-  constructor(mesh, radius, startDir, rand, legs) {
-    this.walker = new SurfaceWanderer(mesh, radius, startDir);
+function makeRng(seedStr) {
+  let seed = seedStr.split('').reduce((a, c) => a + c.charCodeAt(0), 7);
+  return () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+}
+
+class Patroller {
+  constructor(mesh, centerX, centerZ, patrolRadius, rand, legs) {
+    const startX = centerX + (rand() - 0.5) * patrolRadius;
+    const startZ = centerZ + (rand() - 0.5) * patrolRadius;
+    this.walker = new FlatWanderer(mesh, startX, startZ);
+    this.centerX = centerX;
+    this.centerZ = centerZ;
+    this.patrolRadius = patrolRadius;
     this.rand = rand;
-    this.legs = legs; // optional [leftLeg, rightLeg] pairs to swing while moving
-    this.target = randomSurfaceDir(rand);
+    this.legs = legs;
+    this.pickTarget();
     this.pauseTimer = rand() * 2;
+  }
+
+  pickTarget() {
+    const a = this.rand() * Math.PI * 2;
+    const r = this.rand() * this.patrolRadius;
+    this.targetX = this.centerX + Math.cos(a) * r;
+    this.targetZ = this.centerZ + Math.sin(a) * r;
   }
 
   update(dt) {
@@ -24,35 +43,30 @@ class Wanderer {
       this.walker.settle(dt);
       return;
     }
-    const remaining = this.walker.moveToward(this.target, WANDER_SPEED, WANDER_TURN_RATE, dt);
+    const dist = this.walker.moveToward(this.targetX, this.targetZ, WANDER_SPEED, WANDER_TURN_RATE, dt);
     if (this.legs) {
       const swing = Math.sin(this.walker.walkPhase) * 0.5;
       this.legs[0].rotation.x = swing;
       this.legs[1].rotation.x = -swing;
     }
-    if (remaining < ARRIVE_ANGLE) {
-      this.target = randomSurfaceDir(this.rand);
+    if (dist < ARRIVE_DIST) {
+      this.pickTarget();
       this.pauseTimer = 1 + this.rand() * 3;
     }
   }
 }
 
-// The player's pet hops along behind them — idle-bobbing in place while
-// close, hopping to catch up once the player gets more than a few units
-// ahead, rather than patrolling a fixed route like the NPCs/aliens.
 class FollowerPet {
-  constructor(mesh, radius, startDir) {
-    this.walker = new SurfaceWanderer(mesh, radius, startDir);
+  constructor(mesh, startX, startZ) {
+    this.walker = new FlatWanderer(mesh, startX, startZ);
     this.bob = Math.random() * 10;
   }
 
   update(dt, playerPosition) {
     this.bob += dt * 4;
-    const toPlayer = playerPosition.clone().sub(this.walker.position);
-    const dist = toPlayer.length();
+    const dist = Math.hypot(playerPosition.x - this.walker.position.x, playerPosition.z - this.walker.position.z);
     if (dist > 3) {
-      const targetDir = playerPosition.clone().normalize();
-      this.walker.moveToward(targetDir, WANDER_SPEED * 1.6, WANDER_TURN_RATE * 1.4, dt);
+      this.walker.moveToward(playerPosition.x, playerPosition.z, WANDER_SPEED * 1.7, WANDER_TURN_RATE * 1.4, dt);
     } else {
       this.walker.settle(dt);
     }
@@ -60,41 +74,41 @@ class FollowerPet {
   }
 }
 
-// Spawns a handful of NPC astronauts, aliens, and one space pet on a
-// planet's surface, all using the shared sphere-tangent wander movement —
-// populates the world with visible life instead of an empty walk.
-export function spawnLifeForms(scene, radius, rand, spawnDir) {
-  const wanderers = [];
-  let petHandle = null;
+// Populates every district with a few wandering NPC astronauts and aliens
+// (patrolling within that district's clearing) plus one space pet that
+// follows the player everywhere across the whole world.
+export function spawnLifeForms(scene, districts, spawnPos) {
+  const patrollers = [];
 
-  const npcCount = 3;
-  for (let i = 0; i < npcCount; i++) {
-    const { group, leftLeg, rightLeg } = buildAstronaut({
-      suitColor: NPC_SUIT_COLORS[Math.floor(rand() * NPC_SUIT_COLORS.length)],
-      accentColor: 0x1c2530,
-    });
-    scene.add(group);
-    const startDir = randomSurfaceDir(rand);
-    wanderers.push(new Wanderer(group, radius, startDir, rand, [leftLeg, rightLeg]));
+  for (const district of districts) {
+    const rand = makeRng(`life-${district.id}`);
+    const { x: cx, z: cz } = district.position;
+    const patrolRadius = district.clearRadius * 0.6;
+
+    for (let i = 0; i < 2; i++) {
+      const { group, leftLeg, rightLeg } = buildAstronaut({
+        suitColor: NPC_SUIT_COLORS[Math.floor(rand() * NPC_SUIT_COLORS.length)],
+        accentColor: 0x1c2530,
+      });
+      scene.add(group);
+      patrollers.push(new Patroller(group, cx, cz, patrolRadius, rand, [leftLeg, rightLeg]));
+    }
+    for (let i = 0; i < 2; i++) {
+      const { group } = buildAlien(rand);
+      scene.add(group);
+      patrollers.push(new Patroller(group, cx, cz, patrolRadius, rand, null));
+    }
   }
 
-  const alienCount = 3;
-  for (let i = 0; i < alienCount; i++) {
-    const { group } = buildAlien(rand);
-    scene.add(group);
-    const startDir = randomSurfaceDir(rand);
-    wanderers.push(new Wanderer(group, radius, startDir, rand, null));
-  }
-
-  const { group: petGroup } = buildSpacePet(rand);
+  const petRand = makeRng('pet');
+  const { group: petGroup } = buildSpacePet(petRand);
   scene.add(petGroup);
-  const petStartDir = spawnDir.clone();
-  petHandle = new FollowerPet(petGroup, radius, petStartDir);
+  const pet = new FollowerPet(petGroup, spawnPos.x, spawnPos.z);
 
   return {
     update(dt, playerPosition) {
-      for (const w of wanderers) w.update(dt);
-      if (petHandle) petHandle.update(dt, playerPosition);
+      for (const p of patrollers) p.update(dt);
+      pet.update(dt, playerPosition);
     },
   };
 }

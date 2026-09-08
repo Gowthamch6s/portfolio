@@ -12,6 +12,10 @@ export class InputManager {
     return f;
   }
 
+  get boost() {
+    return this.keys.has('ShiftLeft') || this.keys.has('ShiftRight');
+  }
+
   get turn() {
     let t = 0;
     if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) t -= 1;

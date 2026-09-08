@@ -23,6 +23,71 @@ body {
   height: 100%;
 }
 
+/* landing cinematic — full-screen fade + planet caption, shown while the
+   camera flies in toward Terra before the walkable world is revealed */
+#intro-fade {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+#intro-fade.visible {
+  opacity: 1;
+}
+
+#intro-caption {
+  position: fixed;
+  left: 50%;
+  bottom: 14%;
+  transform: translateX(-50%);
+  z-index: 22;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+#intro-caption.visible {
+  opacity: 1;
+}
+#intro-caption .planet-name {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: linear-gradient(120deg, #8b5cf6, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+#intro-caption .planet-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #a9b6d8;
+  letter-spacing: 0.04em;
+}
+
+/* HUD chrome stays hidden until the landing cinematic hands control to the
+   player, so nothing overlaps the space-flight shot */
+#top-bar,
+#progress-panel,
+#bottom-hud,
+#exit-game,
+#touch-controls {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+#top-bar.visible-ui,
+#progress-panel.visible-ui,
+#bottom-hud.visible-ui,
+#exit-game.visible-ui,
+#touch-controls.visible-ui {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 #exit-game {
   position: fixed;
   top: 18px;
@@ -37,7 +102,7 @@ body {
   font-weight: 600;
   text-decoration: none;
   backdrop-filter: blur(10px);
-  transition: border-color 0.25s ease, transform 0.25s ease;
+  transition: border-color 0.25s ease, transform 0.25s ease, opacity 0.6s ease;
 }
 #exit-game:hover {
   border-color: rgba(139, 92, 246, 0.9);
@@ -70,6 +135,14 @@ body {
   width: 38px;
   padding: 8px 0;
   text-align: center;
+}
+#node-map {
+  width: 130px;
+  height: 130px;
+  border-radius: 16px;
+  background: rgba(8, 12, 24, 0.7);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  backdrop-filter: blur(10px);
 }
 
 #progress-panel {
