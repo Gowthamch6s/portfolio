@@ -209,7 +209,7 @@ function tick() {
   }
   lifeForms.update(dt, character.position);
   worldCamera.update(dt, character);
-  hud.updateMap(SPAWN_POSITION, character.position);
+  hud.updateMap(SPAWN_POSITION, character.position, character.heading);
 
   const collectedDistrict = orbs.update(dt, character.position);
   if (collectedDistrict) {
@@ -235,8 +235,10 @@ function tick() {
       }
       const p = orbs.progress[activeDistrict.id];
       hud.setObjective(`Exploring ${activeDistrict.name} — Build Orbs ${p.collected}/${p.total} · approach a glowing monument and press E.`);
+      hud.showDistrictBanner(activeDistrict, p.collected, p.total);
     } else {
       hud.setObjective('Explore — approach a glowing district to begin a mission.');
+      hud.hideDistrictBanner();
     }
 
     let nearest = null;

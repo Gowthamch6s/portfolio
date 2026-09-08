@@ -19,7 +19,13 @@ export class HUD {
     this.qualitySelect = document.getElementById('quality-select');
     this.mapCanvas = document.getElementById('node-map');
     this.mapCtx = this.mapCanvas.getContext('2d');
+    this.banner = document.getElementById('district-banner');
+    this.bannerIcon = document.getElementById('db-icon');
+    this.bannerTitle = document.getElementById('db-title');
+    this.bannerSubtitle = document.getElementById('db-subtitle');
+    this.bannerCount = document.getElementById('db-count');
     this._toastTimeout = null;
+    this._bannerDistrictId = null;
 
     this.muteBtn.addEventListener('click', () => {
       const muted = this.muteBtn.classList.toggle('muted');
@@ -40,33 +46,33 @@ export class HUD {
     this.mapCanvas.height = Math.max(1, rect.height * dpr);
   }
 
-  // A small node-graph — spawn hub in the middle, one node per district
-  // connected back to it, player position as a moving dot — echoing the
-  // reference game's minimap widget instead of a literal terrain render.
-  updateMap(spawnPos, playerPosition) {
+  // A boundary polygon strung through the districts (sorted by angle
+  // around spawn) with a heading-facing player triangle — matching the
+  // reference game's minimap shape instead of hub-and-spoke lines.
+  updateMap(spawnPos, playerPosition, playerHeading = 0) {
     const ctx = this.mapCtx;
     const w = this.mapCanvas.width;
     const h = this.mapCanvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    const scale = Math.min(w, h) / 340;
+    const scale = (Math.min(w, h) / 340) * 0.82;
     const toMap = (x, z) => [w / 2 + (x - spawnPos.x) * scale, h / 2 + (z - spawnPos.z) * scale];
 
-    const [hx, hy] = toMap(spawnPos.x, spawnPos.z);
+    const sorted = [...this.districts].sort(
+      (a, b) =>
+        Math.atan2(a.position.z - spawnPos.z, a.position.x - spawnPos.x) -
+        Math.atan2(b.position.z - spawnPos.z, b.position.x - spawnPos.x)
+    );
     ctx.strokeStyle = 'rgba(139,92,246,0.4)';
     ctx.lineWidth = 1.5;
-    for (const d of this.districts) {
-      const [dx, dy] = toMap(d.position.x, d.position.z);
-      ctx.beginPath();
-      ctx.moveTo(hx, hy);
-      ctx.lineTo(dx, dy);
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = '#ffe8b0';
     ctx.beginPath();
-    ctx.arc(hx, hy, 5, 0, Math.PI * 2);
-    ctx.fill();
+    sorted.forEach((d, i) => {
+      const [x, y] = toMap(d.position.x, d.position.z);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.stroke();
 
     for (const d of this.districts) {
       const [dx, dy] = toMap(d.position.x, d.position.z);
@@ -77,10 +83,37 @@ export class HUD {
     }
 
     const [px, py] = toMap(playerPosition.x, playerPosition.z);
-    ctx.fillStyle = '#ffffff';
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(playerHeading);
+    ctx.fillStyle = '#5eead4';
     ctx.beginPath();
-    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+    ctx.moveTo(0, 7);
+    ctx.lineTo(5, -5);
+    ctx.lineTo(-5, -5);
+    ctx.closePath();
     ctx.fill();
+    ctx.restore();
+  }
+
+  // Persistent, non-blocking "you're inside this district" info bar —
+  // shown while the player is within a district's clearing, updated live
+  // as they collect Build Orbs. Cheap to call every frame.
+  showDistrictBanner(district, collected, total) {
+    if (this._bannerDistrictId !== district.id) {
+      this._bannerDistrictId = district.id;
+      this.bannerTitle.textContent = district.name.toUpperCase();
+      this.bannerSubtitle.textContent = district.theme;
+      this.bannerIcon.style.color = `#${district.color.toString(16).padStart(6, '0')}`;
+      this.bannerIcon.style.background = `#${district.color.toString(16).padStart(6, '0')}`;
+      this.banner.classList.add('visible');
+    }
+    this.bannerCount.textContent = `${collected}/${total}`;
+  }
+
+  hideDistrictBanner() {
+    this._bannerDistrictId = null;
+    this.banner.classList.remove('visible');
   }
 
   setObjective(text) {
