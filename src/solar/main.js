@@ -3,6 +3,7 @@ import './style.css';
 import { createRenderer, createCamera, setupResize, createStarfield } from './core/SceneSetup.js';
 import { buildSolarSystem, updateSolarSystem } from './map/SolarSystemScene.js';
 import { buildTinyPlanet, decoratePlanet, placeContentNodes } from './planet/TinyPlanetWorld.js';
+import { spawnLifeForms } from './environment/LifeForms.js';
 import { CharacterController } from './character/CharacterController.js';
 import { PlanetCamera } from './character/PlanetCamera.js';
 import { HUD } from './ui/HUD.js';
@@ -13,6 +14,11 @@ import { PLANETS } from './data/planetsData.js';
 const canvas = document.createElement('canvas');
 canvas.id = 'scene';
 document.getElementById('app').appendChild(canvas);
+
+// Where the character always lands on a planet, and where the road/node
+// placement anchor themselves relative to — kept slightly off the exact
+// pole so the tangent-frame math in CharacterController never degenerates.
+const SPAWN_DIR = new THREE.Vector3(0, 1, 0.05).normalize();
 
 const renderer = createRenderer(canvas);
 const camera = createCamera();
@@ -83,12 +89,14 @@ function getOrBuildPlanetScene(data) {
   const planetHandle = buildTinyPlanet(data, radius);
   scene.add(planetHandle.group);
   const nodes = placeContentNodes(planetHandle.group, data.nodes, radius, data.color);
-  decoratePlanet(planetHandle, radius, nodes.map((n) => n.dir), data.color);
+  decoratePlanet(planetHandle, radius, nodes.map((n) => n.dir), data.color, SPAWN_DIR);
 
   const character = new CharacterController(scene, radius);
-  character.spawnAt(new THREE.Vector3(0, 1, 0.3));
+  character.spawnAt(SPAWN_DIR);
 
-  const entry = { scene, character, planetCamera: new PlanetCamera(camera), nodes, radius, visited: false };
+  const lifeForms = spawnLifeForms(scene, radius, planetHandle.rand, SPAWN_DIR);
+
+  const entry = { scene, character, planetCamera: new PlanetCamera(camera), nodes, radius, lifeForms, visited: false };
   planetScenes.set(data.id, entry);
   return entry;
 }
@@ -167,6 +175,7 @@ function tick() {
     if (!hud.isPanelOpen) {
       entry.character.update(dt, { forward: input.forward, turn: input.turn, jump: input.consumeJump() });
     }
+    entry.lifeForms.update(dt, entry.character.mesh.position);
     entry.planetCamera.update(dt, entry.character);
     renderer.render(entry.scene, camera);
 

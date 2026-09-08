@@ -198,11 +198,15 @@ export function buildTinyPlanet(data, radius = 20) {
 
 // Called once the content-node world directions are known (from
 // placeContentNodes) — builds the road looping past them plus all the
-// scatter decoration, keeping decoration clear of the road.
-export function decoratePlanet(planetHandle, radius, nodeDirs, accentColor) {
+// scatter decoration, keeping decoration clear of the road. `spawnDir` is
+// included as the road's first waypoint so it visibly starts right where
+// the character lands, instead of the road existing somewhere the player
+// has to stumble onto.
+export function decoratePlanet(planetHandle, radius, nodeDirs, accentColor, spawnDir) {
   const { group, rand } = planetHandle;
 
-  const roadPoints = nodeDirs.length >= 2 ? buildRoadPath(radius, nodeDirs) : [];
+  const waypoints = spawnDir ? [spawnDir, ...nodeDirs] : nodeDirs;
+  const roadPoints = waypoints.length >= 2 ? buildRoadPath(radius, waypoints) : [];
   if (roadPoints.length) {
     group.add(buildRoadMesh(roadPoints, radius));
   }
@@ -259,9 +263,10 @@ export function decoratePlanet(planetHandle, radius, nodeDirs, accentColor) {
   grass.instanceMatrix.needsUpdate = true;
   group.add(grass);
 
-  // a small distant skyline, clustered on one side of the sphere away from
-  // the main path, echoing the reference's background city silhouette
-  const skylineDir = nodeDirs.length ? nodeDirs[0].clone().negate() : new THREE.Vector3(0, -1, 0);
+  // a small distant skyline, clustered opposite the spawn point (far from
+  // both where the player lands and the node cluster), echoing the
+  // reference's background city silhouette
+  const skylineDir = spawnDir ? spawnDir.clone().negate() : new THREE.Vector3(0, -1, 0);
   const skylineBase = new THREE.Vector3().crossVectors(skylineDir, new THREE.Vector3(0, 1, 0)).normalize();
   if (skylineBase.lengthSq() < 0.01) skylineBase.set(1, 0, 0);
   const skylineBase2 = new THREE.Vector3().crossVectors(skylineDir, skylineBase).normalize();
@@ -289,7 +294,10 @@ export function placeContentNodes(group, nodes, radius, accentColor) {
   const placed = [];
   const golden = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < nodes.length; i++) {
-    const y = 1 - (i / Math.max(1, nodes.length - 1)) * 1.4;
+    // Kept away from y=1 (the north pole, where the character always
+    // spawns) so the nearest monument is a real walk away instead of
+    // landing right on top of it — the whole point of exploring first.
+    const y = 0.5 - (i / Math.max(1, nodes.length - 1)) * 1.0;
     const r = Math.sqrt(Math.max(0, 1 - y * y));
     const theta = golden * i;
     const dir = new THREE.Vector3(Math.cos(theta) * r, y, Math.sin(theta) * r).normalize();

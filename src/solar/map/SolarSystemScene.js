@@ -51,7 +51,13 @@ function buildPlanet(data) {
   geometry.computeVertexNormals();
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-  const body = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, metalness: 0.05 }));
+  // a low-level self-emissive tint (in its own color) so the planet reads
+  // as a glowing world even from an angle the light doesn't reach, rather
+  // than ever going flat black
+  const body = new THREE.Mesh(
+    geometry,
+    new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, metalness: 0.05, emissive: data.color, emissiveIntensity: 0.18 })
+  );
   body.castShadow = true;
   body.receiveShadow = true;
   group.add(body);
@@ -91,14 +97,19 @@ export function buildSolarSystem(scene) {
     new THREE.MeshBasicMaterial({ color: 0xffd27a })
   );
   scene.add(sun);
-  const sunLight = new THREE.PointLight(0xffe8b0, 6, 0, 2);
+  // decay=0 (no distance falloff) is physically wrong but deliberate — with
+  // decay=2 (the default, real inverse-square falloff), planets at orbit
+  // radii up to 150+ receive essentially zero light and render as flat dark
+  // circles. This is a stylized map screen, not a physically-based scene, so
+  // every planet just gets evenly lit regardless of orbit distance.
+  const sunLight = new THREE.PointLight(0xffe8b0, 4.5, 0, 0);
   scene.add(sunLight);
   const sunGlow = new THREE.Mesh(
     new THREE.SphereGeometry(19, 32, 32),
     new THREE.MeshBasicMaterial({ color: 0xffcf6b, transparent: true, opacity: 0.25 })
   );
   sun.add(sunGlow);
-  scene.add(new THREE.AmbientLight(0x304060, 0.55));
+  scene.add(new THREE.AmbientLight(0x506080, 0.85));
 
   const homeLabel = buildLabelSprite('Home', 0xffe8b0);
   homeLabel.position.y = 24;
