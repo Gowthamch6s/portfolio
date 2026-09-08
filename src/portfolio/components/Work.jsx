@@ -1,4 +1,5 @@
 import Reveal from './Reveal.jsx';
+import WorkPoster from './WorkPoster.jsx';
 
 // Projects and experience/education merged into one continuous timeline —
 // matching the reference site's "Selected Work" structure (Counterpoint ->
@@ -21,7 +22,8 @@ const WORK = [
     ],
     tech: ['LangGraph', 'FastAPI', 'PostgreSQL', 'E2B', 'Next.js', 'Docker'],
     emoji: '🤖',
-    gradient: 'linear-gradient(135deg, #6366f1, #4338ca 60%, #1e1b4b)',
+    scene: 'circuit',
+    palette: { sky: ['#2a2560', '#4338ca'], line: '#c7d2fe', glow: '#818cf8' },
     link: 'https://github.com/Gowthamch6s/AgentFlow-Studio',
     linkLabel: 'View on GitHub →',
     secondaryLink: 'https://github.com/Gowthamch6s/agent-observability-kit',
@@ -41,7 +43,8 @@ const WORK = [
       'Automated project grading in Python — cut turnaround 35%',
     ],
     emoji: '🧑‍🏫',
-    gradient: 'linear-gradient(135deg, #059669, #047857 60%, #064e3b)',
+    scene: 'forest',
+    palette: { sky: ['#eaf3df', '#a8c98a'], line: '#215732', glow: '#f4d35e' },
   },
   {
     kind: 'project',
@@ -59,7 +62,8 @@ const WORK = [
     ],
     tech: ['LangGraph', 'FastAPI', 'FAISS', 'Groq', 'React', 'Adzuna API'],
     emoji: '🎯',
-    gradient: 'linear-gradient(135deg, #0ea5e9, #0891b2 60%, #164e63)',
+    scene: 'wave',
+    palette: { sky: ['#dff4fb', '#7dd3e8'], line: '#0b4f6c', glow: '#fef9c3' },
     link: 'https://gowtham00007-ai-career-coach.hf.space',
     linkLabel: 'Live demo →',
   },
@@ -79,7 +83,8 @@ const WORK = [
     ],
     tech: ['LangGraph', 'Tavily', 'Streamlit', 'Pydantic', 'Python'],
     emoji: '🧭',
-    gradient: 'linear-gradient(135deg, #10b981, #059669 60%, #064e3b)',
+    scene: 'canyon',
+    palette: { sky: ['#fdeecb', '#f0a868'], line: '#8a3b1f', glow: '#fde68a' },
     link: 'https://github.com/Gowthamch6s/market-research-agent',
     linkLabel: 'View on GitHub →',
   },
@@ -98,7 +103,8 @@ const WORK = [
     ],
     tech: ['Python', 'LangChain', 'Llama 3', 'Ollama', 'Gradio'],
     emoji: '📄',
-    gradient: 'linear-gradient(135deg, #7c3aed, #4f46e5 60%, #1e1b4b)',
+    scene: 'circuit',
+    palette: { sky: ['#2e1f4d', '#6d28d9'], line: '#ddd6fe', glow: '#c4b5fd' },
     link: 'https://github.com/Gowthamch6s/ai-assistant',
     linkLabel: 'View on GitHub →',
   },
@@ -117,7 +123,8 @@ const WORK = [
     ],
     tech: ['TensorFlow', 'Keras', 'FastAPI', 'TFLite'],
     emoji: '🏭',
-    gradient: 'linear-gradient(135deg, #f97316, #dc2626 60%, #7c2d12)',
+    scene: 'canyon',
+    palette: { sky: ['#fde3d0', '#f2734b'], line: '#7c2d12', glow: '#fed7aa' },
     link: 'https://github.com/Gowthamch6s/ai-ml-inspection-system',
     linkLabel: 'View on GitHub →',
   },
@@ -134,7 +141,8 @@ const WORK = [
       'Led UI/UX direction for a platform used daily by thousands',
     ],
     emoji: '💻',
-    gradient: 'linear-gradient(135deg, #db2777, #9d174d 60%, #500724)',
+    scene: 'wave',
+    palette: { sky: ['#fde2ef', '#f472b6'], line: '#831843', glow: '#fbcfe8' },
   },
   {
     kind: 'education',
@@ -143,7 +151,8 @@ const WORK = [
     period: 'Aug 2024 — May 2026',
     blurb: 'Coursework: Machine Learning, NLP, Distributed Systems, Advanced Algorithms.',
     emoji: '🎓',
-    gradient: 'linear-gradient(135deg, #4a6741, #26301f 60%, #1a2214)',
+    scene: 'forest',
+    palette: { sky: ['#e7f0da', '#7fa563'], line: '#26301f', glow: '#fef3c7' },
   },
   {
     kind: 'education',
@@ -152,7 +161,8 @@ const WORK = [
     period: 'Aug 2020 — May 2024',
     blurb: 'Coursework: Data Structures, Operating Systems, AI, Database Management.',
     emoji: '🎓',
-    gradient: 'linear-gradient(135deg, #8a5a2e, #5c3a1e 60%, #2e1c0f)',
+    scene: 'canyon',
+    palette: { sky: ['#f5e6d3', '#c9973f'], line: '#5c3a1e', glow: '#fde68a' },
   },
 ];
 
@@ -254,28 +264,26 @@ export default function Work() {
                   </div>
                 </div>
 
-                {/* postcard-stack visual side */}
+                {/* postcard-stack visual side — a flat-vector "travel
+                    poster" scene standing in for the reference site's
+                    bespoke painted illustration */}
                 <div className={`relative ${i % 2 === 1 ? 'md:order-1' : ''}`}>
                   <div
                     className="hidden sm:block absolute inset-0 rounded-3xl rotate-2 translate-x-2 translate-y-2"
-                    style={{ background: w.gradient, opacity: 0.3 }}
+                    style={{ background: w.palette.line, opacity: 0.18 }}
                     aria-hidden="true"
                   />
                   <div className="glass rounded-3xl overflow-hidden relative">
                     <div className="p-2.5" style={{ background: 'var(--bg)' }}>
-                      <div
-                        className="h-44 grid place-items-center text-6xl relative overflow-hidden rounded-xl"
-                        style={{ background: w.gradient }}
-                        aria-hidden="true"
-                      >
-                        <span className="drop-shadow-[0_4px_18px_rgba(0,0,0,0.4)]">{w.emoji}</span>
-                        <div
-                          className="absolute inset-0 opacity-25"
-                          style={{
-                            backgroundImage:
-                              'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.5) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.3) 0, transparent 45%)',
-                          }}
-                        />
+                      <div className="h-44 relative overflow-hidden rounded-xl">
+                        <WorkPoster title={w.title} scene={w.scene} palette={w.palette} />
+                        <span
+                          className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full grid place-items-center text-lg shadow-lg"
+                          style={{ background: w.palette.sky[1] }}
+                          aria-hidden="true"
+                        >
+                          {w.emoji}
+                        </span>
                       </div>
                       <p
                         className="mt-2 px-1 text-[11px] font-semibold tracking-wide"
