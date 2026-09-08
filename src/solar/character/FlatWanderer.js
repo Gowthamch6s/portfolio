@@ -4,9 +4,13 @@ import { groundHeight } from '../world/Terrain.js';
 // Flat-world equivalent of the old sphere-tangent wander movement: standard
 // ground-height-following walk toward a target (x,z), turning to face it.
 export class FlatWanderer {
-  constructor(mesh, startX, startZ) {
+  // `footOffset` compensates for meshes whose local origin doesn't sit
+  // exactly at their own feet (e.g. the astronaut model) — pass the mesh's
+  // bounding-box min.y so it doesn't hover above/sink below the terrain.
+  constructor(mesh, startX, startZ, footOffset = 0) {
     this.mesh = mesh;
-    this.position = new THREE.Vector3(startX, groundHeight(startX, startZ, []), startZ);
+    this.footOffset = footOffset;
+    this.position = new THREE.Vector3(startX, groundHeight(startX, startZ, []) - footOffset, startZ);
     this.heading = Math.random() * Math.PI * 2;
     this.walkPhase = Math.random() * 10;
     this._sync();
@@ -26,7 +30,7 @@ export class FlatWanderer {
     const move = speed * dt;
     this.position.x += Math.sin(this.heading) * move;
     this.position.z += Math.cos(this.heading) * move;
-    this.position.y = groundHeight(this.position.x, this.position.z, []);
+    this.position.y = groundHeight(this.position.x, this.position.z, []) - this.footOffset;
     this.walkPhase += dt * speed * 1.4;
     this._sync();
     return dist;

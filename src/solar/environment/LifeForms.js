@@ -1,7 +1,16 @@
+import * as THREE from 'three';
 import { buildAstronaut } from '../character/Astronaut.js';
 import { buildAlien } from './Alien.js';
 import { buildSpacePet } from './SpacePet.js';
 import { FlatWanderer } from '../character/FlatWanderer.js';
+
+// Some low-poly models' local origin doesn't sit exactly at their own feet
+// (the astronaut's legs stop a bit short of y=0) — measure the real gap so
+// NPCs plant their feet on the terrain instead of hovering/sinking.
+function computeFootOffset(mesh) {
+  mesh.updateWorldMatrix(true, true);
+  return new THREE.Box3().setFromObject(mesh).min.y;
+}
 
 const NPC_SUIT_COLORS = [0xffd27a, 0x8b5cf6, 0x22d3ee, 0xf472b6, 0x4ade80];
 const WANDER_SPEED = 2.6;
@@ -17,10 +26,10 @@ function makeRng(seedStr) {
 }
 
 class Patroller {
-  constructor(mesh, centerX, centerZ, patrolRadius, rand, legs) {
+  constructor(mesh, centerX, centerZ, patrolRadius, rand, legs, footOffset = 0) {
     const startX = centerX + (rand() - 0.5) * patrolRadius;
     const startZ = centerZ + (rand() - 0.5) * patrolRadius;
-    this.walker = new FlatWanderer(mesh, startX, startZ);
+    this.walker = new FlatWanderer(mesh, startX, startZ, footOffset);
     this.centerX = centerX;
     this.centerZ = centerZ;
     this.patrolRadius = patrolRadius;
@@ -57,8 +66,8 @@ class Patroller {
 }
 
 class FollowerPet {
-  constructor(mesh, startX, startZ) {
-    this.walker = new FlatWanderer(mesh, startX, startZ);
+  constructor(mesh, startX, startZ, footOffset = 0) {
+    this.walker = new FlatWanderer(mesh, startX, startZ, footOffset);
     this.bob = Math.random() * 10;
   }
 
@@ -91,19 +100,19 @@ export function spawnLifeForms(scene, districts, spawnPos) {
         accentColor: 0x1c2530,
       });
       scene.add(group);
-      patrollers.push(new Patroller(group, cx, cz, patrolRadius, rand, [leftLeg, rightLeg]));
+      patrollers.push(new Patroller(group, cx, cz, patrolRadius, rand, [leftLeg, rightLeg], computeFootOffset(group)));
     }
     for (let i = 0; i < 2; i++) {
       const { group } = buildAlien(rand);
       scene.add(group);
-      patrollers.push(new Patroller(group, cx, cz, patrolRadius, rand, null));
+      patrollers.push(new Patroller(group, cx, cz, patrolRadius, rand, null, computeFootOffset(group)));
     }
   }
 
   const petRand = makeRng('pet');
   const { group: petGroup } = buildSpacePet(petRand);
   scene.add(petGroup);
-  const pet = new FollowerPet(petGroup, spawnPos.x, spawnPos.z);
+  const pet = new FollowerPet(petGroup, spawnPos.x, spawnPos.z, computeFootOffset(petGroup));
 
   return {
     update(dt, playerPosition) {

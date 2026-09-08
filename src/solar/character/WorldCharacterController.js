@@ -22,6 +22,13 @@ export class WorldCharacterController {
     this.arms = [astronaut.leftArm, astronaut.rightArm];
     scene.add(astronaut.group);
 
+    // The model's own feet don't sit exactly at its local y=0 (the legs
+    // stop a bit short of the group's origin) — measure that gap once so
+    // ground contact lines up with the terrain instead of hovering/sinking.
+    this.mesh.updateWorldMatrix(true, true);
+    const footBox = new THREE.Box3().setFromObject(this.mesh);
+    this.footOffset = footBox.min.y;
+
     this.flattenZones = flattenZones;
     this.position = new THREE.Vector3(0, 0, 0);
     this.heading = 0;
@@ -40,7 +47,7 @@ export class WorldCharacterController {
   }
 
   spawnAt(x, z) {
-    this.position.set(x, groundHeight(x, z, this.flattenZones), z);
+    this.position.set(x, groundHeight(x, z, this.flattenZones) - this.footOffset, z);
     this.verticalVelocity = 0;
     this._syncMesh(0, 0, true);
   }
@@ -55,7 +62,7 @@ export class WorldCharacterController {
     this.position.x += dirX * move;
     this.position.z += dirZ * move;
 
-    const groundY = groundHeight(this.position.x, this.position.z, this.flattenZones);
+    const groundY = groundHeight(this.position.x, this.position.z, this.flattenZones) - this.footOffset;
     this.grounded = this.position.y <= groundY + 0.05;
     if (this.grounded && input.jump) {
       this.verticalVelocity = JUMP_SPEED;
