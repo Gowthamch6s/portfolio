@@ -1,30 +1,32 @@
 @import 'tailwindcss';
 
 /* ---------- Theme variables ---------- */
-/* "Field Notes" — a single, flat, editorial look inspired by
-   robbowen.digital: pale blue-white paper, deep navy ink, a bright violet
-   accent with a soft sky-blue second accent, set in the serif "Bitter". */
+/* "Trailhead" — a national-park permit/field-guide look inspired by
+   justmckissick.com: cream/parchment paper, dark forest-olive ink, a
+   trail-marker brown + mustard-gold accent pair, pine green for the
+   mountain illustration, set in condensed caps "Oswald" for headings with
+   a hand-script "Caveat" for trail-sign flourishes. */
 :root {
-  --bg: #f4f9fc;
-  --bg-2: #e9f2f7;
-  --surface: rgba(15, 27, 97, 0.045);
-  --surface-strong: rgba(15, 27, 97, 0.09);
-  --border: rgba(15, 27, 97, 0.14);
-  --border-strong: rgba(15, 27, 97, 0.28);
-  --text: #0f1b61;
-  --text-muted: #5b6591;
-  --accent: #7f00e0;
-  --accent-2: #2e9fc9;
-  --accent-3: #b98ce8;
-  --accent-glow: rgba(127, 0, 224, 0.16);
-  --accent-2-glow: rgba(46, 159, 201, 0.16);
-  --chip-bg: rgba(15, 27, 97, 0.05);
-  --nav-bg: rgba(244, 249, 252, 0.78);
-  --orb-blue: rgba(46, 159, 201, 0.16);
-  --orb-violet: rgba(127, 0, 224, 0.13);
-  --orb-cyan: rgba(170, 220, 236, 0.4);
-  --card-shadow: 0 20px 50px rgba(15, 27, 97, 0.09);
-  --bg-layers: linear-gradient(180deg, #f4f9fc 0%, #eef5f9 60%, #e9f2f7 100%);
+  --bg: #faf7ec;
+  --bg-2: #f2ecd8;
+  --surface: rgba(38, 48, 31, 0.05);
+  --surface-strong: rgba(38, 48, 31, 0.1);
+  --border: rgba(38, 48, 31, 0.15);
+  --border-strong: rgba(38, 48, 31, 0.3);
+  --text: #26301f;
+  --text-muted: #5c6650;
+  --accent: #8a5a2e;
+  --accent-2: #c9973f;
+  --accent-3: #4a6741;
+  --accent-glow: rgba(138, 90, 46, 0.18);
+  --accent-2-glow: rgba(201, 151, 63, 0.2);
+  --chip-bg: rgba(38, 48, 31, 0.05);
+  --nav-bg: rgba(250, 247, 236, 0.82);
+  --orb-blue: rgba(74, 103, 65, 0.14);
+  --orb-violet: rgba(138, 90, 46, 0.12);
+  --orb-cyan: rgba(201, 151, 63, 0.16);
+  --card-shadow: 0 20px 50px rgba(38, 48, 31, 0.1);
+  --bg-layers: linear-gradient(180deg, #faf7ec 0%, #f5f0dd 55%, #f2ecd8 100%);
   color-scheme: light;
 }
 
@@ -34,7 +36,7 @@ html {
 
 body {
   margin: 0;
-  font-family: 'Bitter', 'Georgia', serif;
+  font-family: 'Inter', 'Trebuchet MS', system-ui, sans-serif;
   background: var(--bg-layers) var(--bg);
   background-attachment: fixed;
   color: var(--text);
@@ -47,8 +49,19 @@ h2,
 h3,
 h4,
 .font-display {
-  font-family: 'Bitter', 'Georgia', serif;
-  font-weight: 600;
+  font-family: 'Oswald', 'Arial Narrow', Impact, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+/* hand-script trail-sign flourish — used sparingly for scroll hints and
+   small asides, echoing the reference site's handwritten accents */
+.hand-accent {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0.01em;
 }
 
 /* ---------- Reusable pieces ---------- */

@@ -70,15 +70,15 @@ export default function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.6 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-xs tracking-widest uppercase"
-        style={{ color: 'var(--text-muted)' }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-xl"
+        style={{ color: 'var(--accent-2)' }}
       >
         <motion.span
           animate={{ y: [0, 6, 0] }}
           transition={{ duration: 1.8, repeat: Infinity }}
-          className="inline-block"
+          className="inline-block hand-accent"
         >
-          scroll ↓
+          the scenic route starts here ↓
         </motion.span>
       </motion.div>
     </section>

@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
 
+// Trail-sign distance markers as flavor, not literal — a small homage to
+// the reference site's national-park-permit nav styling.
 const LINKS = [
-  ['About', '#about'],
-  ['Skills', '#skills'],
-  ['Projects', '#projects'],
-  ['Experience', '#experience'],
-  ['Photography', '#photography'],
-  ['Contact', '#contact'],
+  ['About', '#about', '150 FT'],
+  ['Skills', '#skills', '0.3 MI'],
+  ['Projects', '#projects', '0.6 MI'],
+  ['Experience', '#experience', '0.9 MI'],
+  ['Photography', '#photography', '1.2 MI'],
+  ['Contact', '#contact', '1.4 MI'],
 ];
 
 // Floating pill nav — flat paper card, no theme toggle (single light look).
@@ -19,16 +21,22 @@ export default function Navbar({ muted, onToggleMuted }) {
       className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none"
     >
       <nav className="glass pointer-events-auto flex items-center gap-2 sm:gap-5 rounded-full pl-5 pr-2 py-2">
-        <a href="#top" className="font-extrabold text-base tracking-tight mr-1">
+        <a href="#top" className="font-display text-base mr-1">
           <span className="gradient-text">GC</span>
           <span style={{ color: 'var(--text-muted)' }}>.dev</span>
         </a>
 
         <ul className="hidden md:flex items-center gap-5 text-sm font-medium">
-          {LINKS.map(([label, href]) => (
+          {LINKS.map(([label, href, distance]) => (
             <li key={href}>
-              <a href={href} className="nav-link">
-                {label}
+              <a href={href} className="nav-link flex flex-col items-center leading-tight">
+                <span>{label}</span>
+                <span
+                  className="text-sm font-normal hand-accent leading-none"
+                  style={{ color: 'var(--accent-2)' }}
+                >
+                  {distance} ↓
+                </span>
               </a>
             </li>
           ))}
