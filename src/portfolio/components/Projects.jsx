@@ -73,26 +73,42 @@ export default function Projects() {
         <div className="grid md:grid-cols-2 gap-6">
           {PROJECTS.map((p, i) => (
             <Reveal key={p.title} delay={i * 0.1}>
-              <article className="glass glass-hover rounded-3xl overflow-hidden h-full flex flex-col">
+              {/* postcard stack — a slightly rotated card peeking out behind,
+                  echoing the reference site's stacked-photo treatment */}
+              <div className="relative">
                 <div
-                  className="h-40 grid place-items-center text-6xl relative overflow-hidden"
-                  style={{ background: p.gradient }}
+                  className="hidden sm:block absolute inset-0 rounded-3xl -rotate-2 translate-x-2 translate-y-2"
+                  style={{ background: p.gradient, opacity: 0.35 }}
                   aria-hidden="true"
-                >
-                  <span className="drop-shadow-[0_4px_18px_rgba(0,0,0,0.4)]">{p.emoji}</span>
-                  <div
-                    className="absolute inset-0 opacity-25"
-                    style={{
-                      backgroundImage:
-                        'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.5) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.3) 0, transparent 45%)',
-                    }}
-                  />
-                  <span className="absolute bottom-3 right-4 text-xs font-bold tracking-wide text-white/90 bg-black/30 rounded-full px-3 py-1 backdrop-blur-sm">
-                    {p.stat}
-                  </span>
-                </div>
+                />
+                <article className="glass glass-hover rounded-3xl overflow-hidden h-full flex flex-col relative">
+                  {/* photo-frame mat — a thick cream border around the
+                      "postcard" image, matching the reference site's framed
+                      illustration + caption-strip treatment */}
+                  <div className="p-2.5" style={{ background: 'var(--bg)' }}>
+                    <div
+                      className="h-40 grid place-items-center text-6xl relative overflow-hidden rounded-xl"
+                      style={{ background: p.gradient }}
+                      aria-hidden="true"
+                    >
+                      <span className="drop-shadow-[0_4px_18px_rgba(0,0,0,0.4)]">{p.emoji}</span>
+                      <div
+                        className="absolute inset-0 opacity-25"
+                        style={{
+                          backgroundImage:
+                            'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.5) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.3) 0, transparent 45%)',
+                        }}
+                      />
+                    </div>
+                    <p
+                      className="mt-2 px-1 text-[11px] font-semibold tracking-wide"
+                      style={{ color: 'var(--text-muted)', fontFamily: "'Courier Prime', monospace" }}
+                    >
+                      {p.stat}
+                    </p>
+                  </div>
 
-                <div className="p-7 flex flex-col grow">
+                <div className="p-7 pt-4 flex flex-col grow">
                   <h3 className="text-xl font-bold tracking-tight leading-snug">{p.title}</h3>
                   <p className="mt-3 text-sm leading-relaxed grow" style={{ color: 'var(--text-muted)' }}>
                     {p.blurb}
@@ -129,7 +145,8 @@ export default function Projects() {
                     </a>
                   )}
                 </div>
-              </article>
+                </article>
+              </div>
             </Reveal>
           ))}
         </div>

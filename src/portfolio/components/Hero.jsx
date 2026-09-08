@@ -11,6 +11,26 @@ export default function Hero() {
             side here at rest, recreating the old two-column look without
             being locked into this section's layout. */}
         <div className="max-w-2xl">
+          {/* badge row — a small homage to the reference site's row of
+              icon badges (press, travel, hiking, stargazing, coffee) */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex gap-2.5 mb-6"
+            aria-hidden="true"
+          >
+            {['🎓', '🤖', '🚀', '📊', '☕'].map((icon) => (
+              <span
+                key={icon}
+                className="permit-badge grid place-items-center w-9 h-9 rounded-lg text-base"
+                style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+              >
+                {icon}
+              </span>
+            ))}
+          </motion.div>
+
           <motion.p
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}

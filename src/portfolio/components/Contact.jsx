@@ -77,10 +77,26 @@ export default function Contact() {
         </div>
 
         <Reveal delay={0.2}>
-          <p className="text-center text-sm mt-16" style={{ color: 'var(--text-muted)' }}>
-            © {new Date().getFullYear()} Gowtham Sai Chimmana · Built with React, Tailwind &amp; a
-            straw hat 👒
-          </p>
+          <div className="mt-20 text-center">
+            <h3 className="font-display text-2xl sm:text-3xl">
+              Thanks for stopping by,
+              <br />
+              come back soon.
+            </h3>
+            <p className="hand-accent text-xl mt-2" style={{ color: 'var(--accent-2)' }}>
+              inbox open 24/7
+            </p>
+            <div
+              className="mt-8 pt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-widest"
+              style={{ borderTop: '1px dashed var(--border-strong)', color: 'var(--text-muted)' }}
+            >
+              <span>Set in Oswald, Inter &amp; Courier Prime</span>
+              <span aria-hidden="true">·</span>
+              <span>Proudly built in Tampa, FL</span>
+              <span aria-hidden="true">·</span>
+              <span>© {new Date().getFullYear()} Gowtham Sai Chimmana</span>
+            </div>
+          </div>
         </Reveal>
       </div>
     </footer>
