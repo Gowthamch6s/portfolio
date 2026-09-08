@@ -25,7 +25,7 @@ export default function Photography() {
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <Reveal>
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
-            <span className="gradient-text">06.</span> Behind the Lens
+            <span className="gradient-text">04.</span> Behind the Lens
           </h2>
           <p className="max-w-2xl text-lg leading-relaxed mb-10" style={{ color: 'var(--text-muted)' }}>
             Outside of code, I click a lot of pictures — landscape, lifestyle,

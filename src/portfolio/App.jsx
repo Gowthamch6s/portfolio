@@ -4,8 +4,7 @@ import GlowOrbs from './components/GlowOrbs.jsx';
 import Hero from './components/Hero.jsx';
 import About from './components/About.jsx';
 import Skills from './components/Skills.jsx';
-import Projects from './components/Projects.jsx';
-import Experience from './components/Experience.jsx';
+import Work from './components/Work.jsx';
 import Photography from './components/Photography.jsx';
 import Contact from './components/Contact.jsx';
 import GameModeButton from './components/GameModeButton.jsx';
@@ -35,10 +34,8 @@ export default function App() {
         <TrailConnector fromRight={false} toRight />
         <Skills />
         <TrailConnector fromRight toRight={false} />
-        <Projects />
+        <Work />
         <TrailConnector fromRight={false} toRight />
-        <Experience />
-        <TrailConnector fromRight toRight={false} />
         <Photography />
         <TrailConnector fromRight={false} toRight />
         <Contact />

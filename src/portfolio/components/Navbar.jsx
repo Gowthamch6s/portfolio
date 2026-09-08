@@ -5,10 +5,9 @@ import { motion } from 'framer-motion';
 const LINKS = [
   ['About', '#about', '150 FT'],
   ['Skills', '#skills', '0.3 MI'],
-  ['Projects', '#projects', '0.6 MI'],
-  ['Experience', '#experience', '0.9 MI'],
-  ['Photography', '#photography', '1.2 MI'],
-  ['Contact', '#contact', '1.4 MI'],
+  ['Work', '#projects', '0.7 MI'],
+  ['Photography', '#photography', '1.1 MI'],
+  ['Contact', '#contact', '1.3 MI'],
 ];
 
 // Floating pill nav — flat paper card, no theme toggle (single light look).
