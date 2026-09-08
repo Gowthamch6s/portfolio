@@ -38,9 +38,8 @@ export default function Character({ walking = false, lookY = null, greeting = fa
   const jumpY = useMotionValue(0);
   const leftLegRotate = useMotionValue(0);
   const rightLegRotate = useMotionValue(0);
-  const leftArmWalk = useMotionValue(0); // walk-cycle swing, paired with the right leg
-  const rightArmWalk = useMotionValue(0); // walk-cycle swing, paired with the left leg
-  const walkLevel = useMotionValue(0); // 0 normal arm pose · 1 fully in the walk swing
+  const walkBounce = useMotionValue(0); // vertical bob, one dip per step
+  const walkTilt = useMotionValue(0); // slight side-to-side sway, one per step
   const greetLevel = useMotionValue(0); // 0 normal arm pose · 1 fully waving
   const waveWiggle = useMotionValue(0); // oscillates while waving
 
@@ -60,31 +59,32 @@ export default function Character({ walking = false, lookY = null, greeting = fa
   const headY = useTransform(sy, [-1, 1], [-7, 8]);
   const pupilX = useTransform(ex, [-1, 1], [-6, 6]);
   const pupilY = useTransform(ey, [-1, 1], [-4, 4]);
-  const bodyRotate = useTransform(ax, [-1, 1], [-2.5, 2.5]);
+  const bodyRotate = useTransform([ax, walkTilt], ([x, tilt]) => x * 2.5 + tilt);
 
   // Rest pose: both arms track the cursor, plus a small outward lean from
   // cursor X so it doesn't feel perfectly symmetric; click flings both
-  // straight up in a victory pose. `walkLevel` blends this over to a real
-  // walking arm swing (see the walk-cycle effect below) while `walking` is
-  // true, and `greetLevel` blends the RIGHT arm only over to a raised,
-  // oscillating wave on top of that — the left arm just keeps doing
-  // whatever its rest/walk pose already was, so only one hand waves.
-  // The arm shapes hang straight down from their shoulder pivot at rotate=0,
-  // so a rotation near ±95° swings them in-and-across the chest (crossed
-  // arms) rather than up — a raised "hand in the air" wave needs an angle
-  // near ±170°, which points the arm up and slightly outward instead.
+  // straight up in a victory pose. Arms deliberately do NOT swing during the
+  // walk cycle — an earlier version blended them into an opposite-phase
+  // swing here, but the arm shapes hang close enough to the torso that it
+  // read as the hands crossing over each other instead of a natural gait.
+  // The "walking" look now comes entirely from the legs plus a bounce/tilt
+  // on the body (see the walk-cycle effect below); arms just keep doing
+  // their normal cursor-tracked pose throughout. `greetLevel` blends the
+  // RIGHT arm only over to a raised, oscillating wave on top of that — the
+  // left arm keeps doing whatever its rest pose already was, so only one
+  // hand waves. The arm shapes hang straight down from their shoulder pivot
+  // at rotate=0, so a rotation near ±95° swings them in-and-across the
+  // chest (crossed arms) rather than up — a raised "hand in the air" wave
+  // needs an angle near ±170°, which points the arm up and slightly outward
+  // instead.
   const leftArmRotate = useTransform(
-    [ay, ax, armBoost, walkLevel, leftArmWalk],
-    ([y, x, b, wl, aw]) => {
-      const normal = -(y * 24) - x * 6 - b * 90;
-      return normal * (1 - wl) + aw * wl;
-    }
+    [ay, ax, armBoost],
+    ([y, x, b]) => -(y * 24) - x * 6 - b * 90
   );
   const rightArmRotate = useTransform(
-    [ay, ax, armBoost, walkLevel, rightArmWalk, greetLevel, waveWiggle],
-    ([y, x, b, wl, aw, g, w]) => {
-      const normal = y * 24 - x * 6 + b * 90;
-      const rest = normal * (1 - wl) + aw * wl;
+    [ay, ax, armBoost, greetLevel, waveWiggle],
+    ([y, x, b, g, w]) => {
+      const rest = y * 24 - x * 6 + b * 90;
       const wave = -170 - w * 15;
       return rest * (1 - g) + wave * g;
     }
@@ -107,30 +107,30 @@ export default function Character({ walking = false, lookY = null, greeting = fa
     return () => wiggleControls && wiggleControls.stop();
   }, [greeting, greetLevel, waveWiggle]);
 
-  // Walk cycle: legs swing opposite-phase, and each arm swings in sync with
-  // the OPPOSITE leg (right arm forward with left leg forward, like an
-  // actual gait) rather than sitting frozen near the belly, while `walking`
-  // is true — everything springs back to a neutral standing pose the moment
-  // it stops.
+  // Walk cycle: legs swing opposite-phase like an actual gait, with a
+  // matching vertical bounce (a little dip on every step) and a gentle
+  // side-to-side body tilt — a natural bouncy walk built entirely from legs
+  // + body motion, no arm swing involved — while `walking` is true.
+  // Everything springs back to a neutral standing pose the moment it stops.
   useEffect(() => {
     let controls;
     if (walking) {
       controls = [
         animate(leftLegRotate, [0, 26, 0, -26, 0], { duration: 0.5, repeat: Infinity, ease: 'easeInOut' }),
         animate(rightLegRotate, [0, -26, 0, 26, 0], { duration: 0.5, repeat: Infinity, ease: 'easeInOut' }),
-        animate(rightArmWalk, [0, 24, 0, -24, 0], { duration: 0.5, repeat: Infinity, ease: 'easeInOut' }),
-        animate(leftArmWalk, [0, -24, 0, 24, 0], { duration: 0.5, repeat: Infinity, ease: 'easeInOut' }),
-        animate(walkLevel, 1, { type: 'spring', stiffness: 200, damping: 20 }),
+        animate(walkBounce, [0, -10, 0, -10, 0], { duration: 0.5, repeat: Infinity, ease: 'easeInOut' }),
+        animate(walkTilt, [0, 3, 0, -3, 0], { duration: 0.5, repeat: Infinity, ease: 'easeInOut' }),
       ];
     } else {
       controls = [
         animate(leftLegRotate, 0, { type: 'spring', stiffness: 220, damping: 18 }),
         animate(rightLegRotate, 0, { type: 'spring', stiffness: 220, damping: 18 }),
-        animate(walkLevel, 0, { type: 'spring', stiffness: 200, damping: 20 }),
+        animate(walkBounce, 0, { type: 'spring', stiffness: 220, damping: 18 }),
+        animate(walkTilt, 0, { type: 'spring', stiffness: 220, damping: 18 }),
       ];
     }
     return () => controls.forEach((c) => c.stop());
-  }, [walking, leftLegRotate, rightLegRotate, leftArmWalk, rightArmWalk, walkLevel]);
+  }, [walking, leftLegRotate, rightLegRotate, walkBounce, walkTilt]);
 
   // Glance toward the section just scrolled to. This only nudges `my` once
   // when `lookY` changes — the existing pointermove listener below keeps
@@ -217,6 +217,7 @@ export default function Character({ walking = false, lookY = null, greeting = fa
             <motion.g
               style={{
                 rotate: bodyRotate,
+                y: walkBounce,
                 transformBox: 'view-box',
                 originX: '240px',
                 originY: '470px',
@@ -318,21 +319,18 @@ export default function Character({ walking = false, lookY = null, greeting = fa
               {/* head */}
               <circle cx="240" cy="222" r="104" fill={SKIN} />
 
-              {/* hair — short, tousled, side-swept */}
-              <path
-                d="M132 210
-                   Q120 108 240 100
-                   Q360 108 348 210
-                   Q346 160 322 150
-                   Q330 190 312 178
-                   Q300 130 240 128
-                   Q180 130 168 178
-                   Q150 190 158 150
-                   Q134 160 132 210 Z"
-                fill={HAIR}
-              />
-              <path d="M132 210 Q140 176 160 160 Q150 188 152 206 Z" fill={HAIR_SHADE} opacity="0.6" />
-              <path d="M348 210 Q340 176 320 160 Q330 188 328 206 Z" fill={HAIR_SHADE} opacity="0.6" />
+              {/* tiny sideburn hint near each ear — just enough to read as
+                  hair without any of it actually showing on top */}
+              <path d="M162 200 Q156 218 164 232" fill="none" stroke={HAIR} strokeWidth="7" strokeLinecap="round" opacity="0.7" />
+              <path d="M318 200 Q324 218 316 232" fill="none" stroke={HAIR} strokeWidth="7" strokeLinecap="round" opacity="0.7" />
+
+              {/* trail hat — a cozy rounded beanie instead of hair, fully
+                  covering the top of the head per feedback */}
+              <path d="M128 190 Q124 96 240 90 Q356 96 352 190 Q352 168 240 168 Q128 168 128 190 Z" fill={HAIR} />
+              <rect x="122" y="176" width="236" height="34" rx="17" fill={SWEATER} />
+              <rect x="122" y="176" width="236" height="14" rx="7" fill={SWEATER_TRIM} opacity="0.7" />
+              <circle cx="240" cy="82" r="16" fill={SWEATER_TRIM} />
+              <circle cx="240" cy="82" r="16" fill="none" stroke={HAIR_SHADE} strokeWidth="2" opacity="0.4" />
 
               {/* eyebrows */}
               <path d="M184 214 Q202 202 222 210" fill="none" stroke={HAIR} strokeWidth="8" strokeLinecap="round" />

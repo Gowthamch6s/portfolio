@@ -38,9 +38,15 @@ export default function Skills() {
     target: foldRef,
     offset: ['start end', 'end start'],
   });
-  const foldRotate = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [-72, 0, 0, -72]);
-  const foldScaleY = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0.5, 1, 1, 0.5]);
-  const foldOpacity = useTransform(scrollYProgress, [0, 0.12, 0.2, 0.8, 0.88, 1], [0, 0.4, 1, 1, 0.4, 0]);
+  // A single hinge motion continuously tied to scroll position — closed at
+  // both ends of the range, fully open only right at the midpoint — rather
+  // than an early open that then sits flat for most of the scroll (which
+  // a fast scroll/Page Down can jump straight past without ever showing
+  // the fold). This way there's no static plateau to skip: wherever you
+  // are in the range, the rotation is a direct function of scroll offset.
+  const foldRotate = useTransform(scrollYProgress, [0, 0.5, 1], [-70, 0, -70]);
+  const foldScaleY = useTransform(scrollYProgress, [0, 0.5, 1], [0.55, 1, 0.55]);
+  const foldOpacity = useTransform(scrollYProgress, [0, 0.08, 0.5, 0.92, 1], [0, 0.5, 1, 0.5, 0]);
 
   return (
     <section id="skills" className="relative py-24 scroll-mt-20">
