@@ -27,4 +27,20 @@ export class InputManager {
     }
     return false;
   }
+
+  consumeJump() {
+    if (this.keys.has('Space')) {
+      this.keys.delete('Space');
+      return true;
+    }
+    return false;
+  }
+
+  consumeMapToggle() {
+    if (this.keys.has('KeyM')) {
+      this.keys.delete('KeyM');
+      return true;
+    }
+    return false;
+  }
 }

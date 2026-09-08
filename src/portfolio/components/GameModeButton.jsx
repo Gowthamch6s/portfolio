@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-// Floating "enter the treasure-hunt boat game" button, pinned bottom-left.
+// Floating "enter the solar-system explorer game" button, pinned bottom-left.
 export default function GameModeButton() {
   return (
     <motion.a
@@ -13,15 +13,10 @@ export default function GameModeButton() {
       className="btn-primary fixed bottom-6 left-6 z-50 inline-flex items-center gap-2.5 rounded-full px-5 py-3 font-semibold text-sm"
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M3 15c2-2.5 4-2.5 6 0s4 2.5 6 0 4-2.5 6 0M4 19c1.5-1.7 3-1.7 4.5 0s3 1.7 4.5 0 3-1.7 4.5 0M12 4v6M9 7l3-3 3 3"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="1.8" />
+        <ellipse cx="12" cy="12" rx="9.5" ry="3.4" stroke="currentColor" strokeWidth="1.8" transform="rotate(-20 12 12)" />
       </svg>
-      Play the Treasure Hunt
+      Explore the Solar System
     </motion.a>
   );
 }
