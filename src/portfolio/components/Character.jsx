@@ -7,10 +7,11 @@ import {
   animate,
 } from 'framer-motion';
 
-// Blocky Minecraft-style avatar: cube head with brown fringe peeking out of a
-// green creeper hoodie, pixel-shaded torso with a creeper-face patch, blocky
-// green sleeves ending in skin-tone cube hands, pixel pants + sneakers.
-// - Head + eyes track the cursor with springs (same rig as every character before).
+// Cute rounded chibi-style avatar — round head, big friendly eyes, soft
+// tousled hair, a cozy rounded sweater, capsule arms/legs. Replaces the
+// earlier blocky Minecraft-style avatar (too "sad"/blocky per feedback)
+// while keeping every interaction identical:
+// - Head + eyes track the cursor with springs (same rig as before).
 // - Both arms are responsive: they rise together as the cursor moves up, with a
 //   gentle idle sway layered on top.
 // - Legs AND arms march in a real opposite-phase walk cycle whenever
@@ -68,7 +69,7 @@ export default function Character({ walking = false, lookY = null, greeting = fa
   // true, and `greetLevel` blends the RIGHT arm only over to a raised,
   // oscillating wave on top of that — the left arm just keeps doing
   // whatever its rest/walk pose already was, so only one hand waves.
-  // The arm rects hang straight down from their shoulder pivot at rotate=0,
+  // The arm shapes hang straight down from their shoulder pivot at rotate=0,
   // so a rotation near ±95° swings them in-and-across the chest (crossed
   // arms) rather than up — a raised "hand in the air" wave needs an angle
   // near ±170°, which points the arm up and slightly outward instead.
@@ -173,37 +174,20 @@ export default function Character({ walking = false, lookY = null, greeting = fa
     }, 1000);
   };
 
-  // A sparse scatter of slightly darker/lighter squares over a base rect —
-  // cheap way to fake Minecraft's per-pixel shading without hand-authoring
-  // hundreds of individual rects.
-  const pixelNoise = (x, y, w, h, cell, colors, seed = 1) => {
-    const cols = Math.floor(w / cell);
-    const rows = Math.floor(h / cell);
-    const rects = [];
-    let s = seed;
-    const rand = () => {
-      s = (s * 9301 + 49297) % 233280;
-      return s / 233280;
-    };
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (rand() < 0.4) {
-          rects.push(
-            <rect
-              key={`${seed}-${r}-${c}`}
-              x={x + c * cell}
-              y={y + r * cell}
-              width={cell}
-              height={cell}
-              fill={colors[Math.floor(rand() * colors.length)]}
-              opacity={0.5}
-            />
-          );
-        }
-      }
-    }
-    return rects;
-  };
+  // Palette — warm and friendly, tuned to sit comfortably on the site's
+  // cream/olive "Trailhead" theme instead of clashing with a saturated
+  // primary color.
+  const SKIN = '#f0c19a';
+  const SKIN_SHADE = '#dba576';
+  const HAIR = '#3c2a1e';
+  const HAIR_SHADE = '#2b1d14';
+  const SWEATER = '#4a6741';
+  const SWEATER_SHADE = '#3a5233';
+  const SWEATER_TRIM = '#e7c98f';
+  const PANTS = '#3a4a63';
+  const PANTS_SHADE = '#2c3a4e';
+  const SHOE = '#5a3a24';
+  const INK = '#26301f';
 
   return (
     <motion.div
@@ -224,11 +208,10 @@ export default function Character({ walking = false, lookY = null, greeting = fa
             viewBox="0 0 480 640"
             className="w-[300px] sm:w-[360px] lg:w-[420px] h-auto drop-shadow-[0_0_45px_var(--accent-glow)]"
             role="img"
-            aria-label="Blocky Minecraft-style avatar of Gowtham wearing a green creeper hoodie"
-            shapeRendering="crispEdges"
+            aria-label="Cute rounded cartoon avatar of Gowtham wearing a cozy sweater"
           >
             {/* ground shadow */}
-            <ellipse cx="240" cy="618" rx="112" ry="14" fill="rgba(0,0,0,0.3)" />
+            <ellipse cx="240" cy="618" rx="112" ry="14" fill="rgba(0,0,0,0.22)" />
 
             {/* ============ BODY ============ */}
             <motion.g
@@ -248,11 +231,10 @@ export default function Character({ walking = false, lookY = null, greeting = fa
                   originY: '472px',
                 }}
               >
-                <rect x="184" y="470" width="46" height="110" fill="#3fae44" />
-                {pixelNoise(184, 470, 46, 110, 10, ['#2f8f38', '#59c25c'], 11)}
-                <rect x="184" y="470" width="46" height="110" fill="none" stroke="#1f2023" strokeWidth="4" />
-                <rect x="178" y="572" width="58" height="26" fill="#181818" stroke="#000" strokeWidth="4" />
-                <rect x="178" y="590" width="58" height="10" fill="#f4f2ec" stroke="#000" strokeWidth="3" />
+                <rect x="184" y="470" width="46" height="104" rx="23" fill={PANTS} />
+                <rect x="184" y="520" width="46" height="54" rx="18" fill={PANTS_SHADE} opacity="0.5" />
+                <ellipse cx="207" cy="594" rx="32" ry="18" fill={SHOE} />
+                <ellipse cx="207" cy="588" rx="32" ry="10" fill="#f4f2ec" opacity="0.9" />
               </motion.g>
 
               {/* ---- RIGHT LEG (walk-cycle pivot at the hip) ---- */}
@@ -264,31 +246,17 @@ export default function Character({ walking = false, lookY = null, greeting = fa
                   originY: '472px',
                 }}
               >
-                <rect x="250" y="470" width="46" height="110" fill="#3fae44" />
-                {pixelNoise(250, 470, 46, 110, 10, ['#2f8f38', '#59c25c'], 22)}
-                <rect x="250" y="470" width="46" height="110" fill="none" stroke="#1f2023" strokeWidth="4" />
-                <rect x="244" y="572" width="58" height="26" fill="#181818" stroke="#000" strokeWidth="4" />
-                <rect x="244" y="590" width="58" height="10" fill="#f4f2ec" stroke="#000" strokeWidth="3" />
+                <rect x="250" y="470" width="46" height="104" rx="23" fill={PANTS} />
+                <rect x="250" y="520" width="46" height="54" rx="18" fill={PANTS_SHADE} opacity="0.5" />
+                <ellipse cx="273" cy="594" rx="32" ry="18" fill={SHOE} />
+                <ellipse cx="273" cy="588" rx="32" ry="10" fill="#f4f2ec" opacity="0.9" />
               </motion.g>
 
-              {/* torso — hoodie */}
-              <rect x="164" y="330" width="152" height="150" fill="#3fae44" stroke="#1f2023" strokeWidth="5" />
-              {pixelNoise(164, 330, 152, 150, 12, ['#2f8f38', '#59c25c', '#7ed67f'], 33)}
-              <rect x="164" y="330" width="152" height="150" fill="none" stroke="#1f2023" strokeWidth="5" />
-
-              {/* creeper-face patch, centered on the chest */}
-              <rect x="200" y="360" width="80" height="80" fill="#5bc25f" stroke="#1f2023" strokeWidth="4" />
-              <rect x="212" y="374" width="16" height="16" fill="#151515" />
-              <rect x="252" y="374" width="16" height="16" fill="#151515" />
-              <rect x="228" y="396" width="24" height="16" fill="#151515" />
-              <rect x="216" y="404" width="12" height="16" fill="#151515" />
-              <rect x="252" y="404" width="12" height="16" fill="#151515" />
-
-              {/* hood strings */}
-              <line x1="216" y1="336" x2="212" y2="378" stroke="#151515" strokeWidth="4" />
-              <line x1="264" y1="336" x2="268" y2="378" stroke="#151515" strokeWidth="4" />
-              <circle cx="212" cy="380" r="5" fill="#151515" />
-              <circle cx="268" cy="380" r="5" fill="#151515" />
+              {/* torso — cozy rounded sweater */}
+              <rect x="160" y="326" width="160" height="156" rx="46" fill={SWEATER} />
+              <path d="M164 400 Q240 424 316 400 L316 470 Q240 486 164 470 Z" fill={SWEATER_SHADE} opacity="0.55" />
+              {/* collar */}
+              <path d="M210 330 Q240 356 270 330 L262 348 Q240 364 218 348 Z" fill={SWEATER_TRIM} />
 
               {/* ---- LEFT ARM (viewer-left, responsive) ---- */}
               <motion.g
@@ -296,19 +264,16 @@ export default function Character({ walking = false, lookY = null, greeting = fa
                   rotate: leftArmRotate,
                   transformBox: 'view-box',
                   originX: '178px',
-                  originY: '346px',
+                  originY: '350px',
                 }}
               >
                 <motion.g
                   animate={{ rotate: [0, -3, 0, 2, 0] }}
                   transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ transformBox: 'view-box', originX: '178px', originY: '346px' }}
+                  style={{ transformBox: 'view-box', originX: '178px', originY: '350px' }}
                 >
-                  <rect x="150" y="340" width="40" height="96" fill="#3fae44" stroke="#1f2023" strokeWidth="5" />
-                  {pixelNoise(150, 340, 40, 96, 10, ['#2f8f38', '#59c25c'], 44)}
-                  <rect x="150" y="340" width="40" height="96" fill="none" stroke="#1f2023" strokeWidth="5" />
-                  {/* skin-tone cube hand */}
-                  <rect x="150" y="432" width="40" height="34" fill="#f0be96" stroke="#1f2023" strokeWidth="5" />
+                  <rect x="150" y="342" width="52" height="102" rx="26" fill={SWEATER} />
+                  <circle cx="176" cy="452" r="26" fill={SKIN} />
                 </motion.g>
               </motion.g>
 
@@ -318,23 +283,21 @@ export default function Character({ walking = false, lookY = null, greeting = fa
                   rotate: rightArmRotate,
                   transformBox: 'view-box',
                   originX: '302px',
-                  originY: '346px',
+                  originY: '350px',
                 }}
               >
                 <motion.g
                   animate={{ rotate: [0, 3, 0, -2, 0] }}
                   transition={{ duration: 4.1, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ transformBox: 'view-box', originX: '302px', originY: '346px' }}
+                  style={{ transformBox: 'view-box', originX: '302px', originY: '350px' }}
                 >
-                  <rect x="290" y="340" width="40" height="96" fill="#3fae44" stroke="#1f2023" strokeWidth="5" />
-                  {pixelNoise(290, 340, 40, 96, 10, ['#2f8f38', '#59c25c'], 55)}
-                  <rect x="290" y="340" width="40" height="96" fill="none" stroke="#1f2023" strokeWidth="5" />
-                  <rect x="290" y="432" width="40" height="34" fill="#f0be96" stroke="#1f2023" strokeWidth="5" />
+                  <rect x="278" y="342" width="52" height="102" rx="26" fill={SWEATER} />
+                  <circle cx="304" cy="452" r="26" fill={SKIN} />
                 </motion.g>
               </motion.g>
             </motion.g>
 
-            {/* ============ HEAD (mouse-tracked cube) ============ */}
+            {/* ============ HEAD (mouse-tracked, round + friendly) ============ */}
             <motion.g
               style={{
                 rotate: headRotate,
@@ -342,63 +305,64 @@ export default function Character({ walking = false, lookY = null, greeting = fa
                 y: headY,
                 transformBox: 'view-box',
                 originX: '240px',
-                originY: '260px',
+                originY: '230px',
               }}
             >
               {/* neck */}
-              <rect x="216" y="308" width="48" height="26" fill="#f0be96" stroke="#1f2023" strokeWidth="4" />
-
-              {/* hood — green cube framing the face, sits behind everything else in the head */}
-              <rect x="140" y="120" width="200" height="200" rx="6" fill="#3fae44" stroke="#1f2023" strokeWidth="5" />
-              {pixelNoise(140, 120, 200, 60, 12, ['#2f8f38', '#59c25c'], 66)}
-              <rect x="140" y="120" width="200" height="200" rx="6" fill="none" stroke="#1f2023" strokeWidth="5" />
-
-              {/* face — inset skin cube */}
-              <rect x="164" y="164" width="152" height="140" fill="#f0be96" stroke="#1f2023" strokeWidth="5" />
-
-              {/* brown fringe peeking out from under the hood */}
-              <rect x="164" y="164" width="152" height="26" fill="#5a3a24" />
-              <rect x="164" y="164" width="30" height="46" fill="#5a3a24" />
-              <rect x="286" y="164" width="30" height="46" fill="#5a3a24" />
-              <rect x="196" y="182" width="18" height="20" fill="#5a3a24" />
-              <rect x="266" y="182" width="18" height="20" fill="#5a3a24" />
+              <rect x="216" y="292" width="48" height="34" rx="16" fill={SKIN_SHADE} />
 
               {/* ears */}
-              <rect x="150" y="220" width="14" height="30" fill="#f0be96" stroke="#1f2023" strokeWidth="3" />
-              <rect x="316" y="220" width="14" height="30" fill="#f0be96" stroke="#1f2023" strokeWidth="3" />
+              <circle cx="146" cy="232" r="18" fill={SKIN} />
+              <circle cx="334" cy="232" r="18" fill={SKIN} />
+
+              {/* head */}
+              <circle cx="240" cy="222" r="104" fill={SKIN} />
+
+              {/* hair — short, tousled, side-swept */}
+              <path
+                d="M132 210
+                   Q120 108 240 100
+                   Q360 108 348 210
+                   Q346 160 322 150
+                   Q330 190 312 178
+                   Q300 130 240 128
+                   Q180 130 168 178
+                   Q150 190 158 150
+                   Q134 160 132 210 Z"
+                fill={HAIR}
+              />
+              <path d="M132 210 Q140 176 160 160 Q150 188 152 206 Z" fill={HAIR_SHADE} opacity="0.6" />
+              <path d="M348 210 Q340 176 320 160 Q330 188 328 206 Z" fill={HAIR_SHADE} opacity="0.6" />
 
               {/* eyebrows */}
-              <rect x="190" y="212" width="34" height="8" fill="#4a2f1c" />
-              <rect x="256" y="212" width="34" height="8" fill="#4a2f1c" />
+              <path d="M184 214 Q202 202 222 210" fill="none" stroke={HAIR} strokeWidth="8" strokeLinecap="round" />
+              <path d="M258 210 Q278 202 296 214" fill="none" stroke={HAIR} strokeWidth="8" strokeLinecap="round" />
 
-              {/* eyes — green sockets with a tracked pupil block */}
-              <rect x="190" y="226" width="36" height="30" fill="#f4f2ec" stroke="#1f2023" strokeWidth="3" />
-              <rect x="254" y="226" width="36" height="30" fill="#f4f2ec" stroke="#1f2023" strokeWidth="3" />
+              {/* eyes — big, round, friendly */}
+              <ellipse cx="203" cy="240" rx="24" ry={excited ? 28 : 26} fill="#ffffff" stroke={INK} strokeWidth="3" />
+              <ellipse cx="277" cy="240" rx="24" ry={excited ? 28 : 26} fill="#ffffff" stroke={INK} strokeWidth="3" />
               <motion.g style={{ x: pupilX, y: pupilY }}>
-                <rect x="200" y="234" width="18" height="18" fill="#4caf50" stroke="#1f2023" strokeWidth="2" />
-                <rect x="264" y="234" width="18" height="18" fill="#4caf50" stroke="#1f2023" strokeWidth="2" />
-                <rect x="206" y="236" width="6" height="6" fill="#e9ffe8" />
-                <rect x="270" y="236" width="6" height="6" fill="#e9ffe8" />
+                <circle cx="203" cy="244" r="13" fill="#3d2b1f" />
+                <circle cx="277" cy="244" r="13" fill="#3d2b1f" />
+                <circle cx="208" cy="239" r="4" fill="#ffffff" />
+                <circle cx="282" cy="239" r="4" fill="#ffffff" />
               </motion.g>
 
-              {/* scar, echoing the earlier characters' small signature detail */}
-              <rect x="286" y="252" width="4" height="20" fill="#c96f4a" />
+              {/* blush */}
+              <ellipse cx="176" cy="270" rx="16" ry="9" fill="#f2937a" opacity="0.5" />
+              <ellipse cx="304" cy="270" rx="16" ry="9" fill="#f2937a" opacity="0.5" />
 
               {/* nose */}
-              <rect x="234" y="256" width="12" height="10" fill="#dba57e" />
+              <path d="M240 250 Q246 262 238 266" fill="none" stroke={SKIN_SHADE} strokeWidth="4" strokeLinecap="round" />
 
-              {/* mouth — flat smile, widens on the power move */}
-              <rect
-                x={excited ? 202 : 212}
-                y="278"
-                width={excited ? 76 : 56}
-                height="8"
-                fill="#1f2023"
+              {/* mouth — warm smile, widens on the power move */}
+              <path
+                d={excited ? 'M204 284 Q240 314 276 284' : 'M214 284 Q240 300 266 284'}
+                fill="none"
+                stroke={INK}
+                strokeWidth="7"
+                strokeLinecap="round"
               />
-
-              {/* blush */}
-              <rect x="180" y="262" width="14" height="10" fill="#e78a72" opacity="0.55" />
-              <rect x="286" y="262" width="14" height="10" fill="#e78a72" opacity="0.55" />
             </motion.g>
           </svg>
         </motion.div>

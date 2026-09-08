@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import Reveal from './Reveal.jsx';
 
 // The core toolset, presented as a backcountry equipment permit — a direct
@@ -28,6 +29,19 @@ const ADDITIONAL = [
 ];
 
 export default function Skills() {
+  // The permit unfolds open as it scrolls into view and folds back closed
+  // if you scroll away in either direction — a real scroll-position-driven
+  // fold (not a one-time reveal), echoing the reference site's "scroll to
+  // unfold" folded-document effect.
+  const foldRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: foldRef,
+    offset: ['start end', 'end start'],
+  });
+  const foldRotate = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [-72, 0, 0, -72]);
+  const foldScaleY = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0.5, 1, 1, 0.5]);
+  const foldOpacity = useTransform(scrollYProgress, [0, 0.12, 0.2, 0.8, 0.88, 1], [0, 0.4, 1, 1, 0.4, 0]);
+
   return (
     <section id="skills" className="relative py-24 scroll-mt-20">
       <div className="max-w-5xl mx-auto px-5 sm:px-8">
@@ -37,8 +51,17 @@ export default function Skills() {
           </h2>
         </Reveal>
 
-        <Reveal>
-          <div className="permit-doc rounded-sm p-6 sm:p-10">
+        <div style={{ perspective: 1600 }}>
+          <motion.div
+            ref={foldRef}
+            style={{
+              rotateX: foldRotate,
+              scaleY: foldScaleY,
+              opacity: foldOpacity,
+              transformOrigin: 'top center',
+            }}
+          >
+            <div className="permit-doc rounded-sm p-6 sm:p-10">
             <div className="flex flex-wrap items-start justify-between gap-4 text-[10px] tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
               <span>Form 10-26 · OMB No. 0826-2026</span>
               <span>Dept. of Engineering — Agentic Division</span>
@@ -108,8 +131,9 @@ export default function Skills() {
                 Signature of Permittee
               </span>
             </div>
-          </div>
-        </Reveal>
+            </div>
+          </motion.div>
+        </div>
 
         <Reveal delay={0.15}>
           <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
