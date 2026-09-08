@@ -4,6 +4,7 @@ import { createRenderer, createCamera, setupResize, createStarfield } from './co
 import { buildTerrain } from './world/Terrain.js';
 import { DISTRICTS, SPAWN_POSITION, buildFlattenZones } from './world/DistrictLayout.js';
 import { decorateWorld, placeDistrictNodes } from './world/DistrictDecoration.js';
+import { spawnCollectibleOrbs } from './world/CollectibleOrbs.js';
 import { WorldCharacterController } from './character/WorldCharacterController.js';
 import { WorldCamera } from './character/WorldCamera.js';
 import { spawnLifeForms } from './environment/LifeForms.js';
@@ -61,6 +62,8 @@ for (const district of DISTRICTS) {
   const nodes = placeDistrictNodes(worldRoot, district);
   for (const n of nodes) allNodes.push({ ...n, district });
 }
+
+const orbs = spawnCollectibleOrbs(worldRoot, DISTRICTS);
 
 const character = new WorldCharacterController(worldRoot, flattenZones);
 character.spawnAt(SPAWN_POSITION.x, SPAWN_POSITION.z);
@@ -208,17 +211,32 @@ function tick() {
   worldCamera.update(dt, character);
   hud.updateMap(SPAWN_POSITION, character.position);
 
+  const collectedDistrict = orbs.update(dt, character.position);
+  if (collectedDistrict) {
+    const p = orbs.progress[collectedDistrict.id];
+    hud.showToast(`✦ Build Orb collected — ${p.collected}/${p.total}`);
+    audio.playDiscoveryChime();
+  }
+
   if (!hud.isPanelOpen) {
-    // arriving at a new district for the first time
+    // track which district (if any) the player is currently inside
+    let activeDistrict = null;
     for (const district of DISTRICTS) {
-      if (enteredDistricts.has(district.id)) continue;
       const d = Math.hypot(character.position.x - district.position.x, character.position.z - district.position.z);
       if (d < district.clearRadius) {
-        enteredDistricts.add(district.id);
-        hud.setObjective(`Exploring ${district.name} — approach a glowing monument and press E.`);
-        hud.showDistrictIntro(district);
+        activeDistrict = district;
         break;
       }
+    }
+    if (activeDistrict) {
+      if (!enteredDistricts.has(activeDistrict.id)) {
+        enteredDistricts.add(activeDistrict.id);
+        hud.showDistrictIntro(activeDistrict);
+      }
+      const p = orbs.progress[activeDistrict.id];
+      hud.setObjective(`Exploring ${activeDistrict.name} — Build Orbs ${p.collected}/${p.total} · approach a glowing monument and press E.`);
+    } else {
+      hud.setObjective('Explore — approach a glowing district to begin a mission.');
     }
 
     let nearest = null;
