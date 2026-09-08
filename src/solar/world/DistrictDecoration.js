@@ -6,6 +6,10 @@ const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3016, roughness: 0.
 const lampPoleMat = new THREE.MeshStandardMaterial({ color: 0x2a2e35, roughness: 0.6, metalness: 0.4 });
 const lampBulbMat = new THREE.MeshStandardMaterial({ color: 0xffe9a8, emissive: 0xffcf6b, emissiveIntensity: 2.2 });
 
+// Samples-per-leg used by buildRoadMesh — shared so junction placement (a
+// sample index per waypoint) and road-sample generation always agree.
+const SAMPLES_PER_LEG = 24;
+
 function makeRng(seedStr) {
   let seed = seedStr.split('').reduce((a, c) => a + c.charCodeAt(0), 7);
   return () => {
@@ -294,16 +298,18 @@ function buildTrafficLight() {
   light.position.set(0, 2.85, 0.3);
   group.add(light);
 
-  function setState(state) {
+  const controller = { group, state: 0 };
+  controller.setState = (state) => {
+    controller.state = state;
     lamps.forEach((mat, i) => {
       mat.emissiveIntensity = i === state ? 2.4 : 0.08;
     });
     light.color.setHex(colors[state]);
     light.intensity = 2.5;
-  }
-  setState(0);
+  };
+  controller.setState(0);
 
-  return { group, setState };
+  return controller;
 }
 
 // A road connecting waypoints ({x,z} world positions), following the actual
@@ -313,7 +319,7 @@ function buildRoadMesh(waypoints, flattenZones, width = 4.2) {
   const uvs = [];
   const indices = [];
   const samples = [];
-  const perLeg = 24;
+  const perLeg = SAMPLES_PER_LEG;
 
   for (let i = 0; i < waypoints.length - 1; i++) {
     const a = waypoints[i];
@@ -433,19 +439,25 @@ export function decorateWorld(scene, spawnPos, districts, flattenZones) {
     tl.group.position.set(lx, groundHeight(lx, lz, flattenZones), lz);
     tl.group.rotation.y = Math.atan2(-rightX, -rightZ);
     group.add(tl.group);
+    tl.sampleIndex = i * SAMPLES_PER_LEG;
     trafficLights.push(tl);
   }
 
-  // a handful of cars patrolling the whole road loop
+  // a handful of cars patrolling the road (the road is one open chain
+  // spawn->d1->d2->...->dN, not a closed loop, so cars ping-pong end to end
+  // rather than teleporting through a wraparound) and stopping at red/yellow
+  // traffic lights instead of driving straight through them.
   const cars = [];
   const carRand = makeRng('cars');
   const totalCars = 6;
+  const maxDist = samples.length - 1;
   for (let i = 0; i < totalCars; i++) {
     const carGroup = buildCar(carRand);
     group.add(carGroup);
     cars.push({
       group: carGroup,
-      dist: (i / totalCars) * samples.length,
+      dist: (i / totalCars) * maxDist,
+      dir: carRand() < 0.5 ? 1 : -1,
       speed: 6 + carRand() * 3,
     });
   }
@@ -556,21 +568,42 @@ export function decorateWorld(scene, spawnPos, districts, flattenZones) {
       for (const tl of trafficLights) tl.setState(signalState);
     }
 
-    // cars looping along the whole road polyline
-    const n = samples.length;
+    // cars driving the road, ping-ponging at each end and stopping at a
+    // red/yellow traffic light ahead of them instead of driving through it
+    const STOP_MARGIN = 3.2; // sample-index units before the signal
     for (const car of cars) {
-      car.dist += car.speed * dt;
-      while (car.dist >= n) car.dist -= n;
-      const i0 = Math.floor(car.dist) % n;
-      const i1 = (i0 + 1) % n;
-      const t = car.dist - Math.floor(car.dist);
+      let blocked = false;
+      for (const tl of trafficLights) {
+        if (tl.state === 0) continue; // green — never blocks
+        const ahead = car.dir > 0 ? tl.sampleIndex - car.dist : car.dist - tl.sampleIndex;
+        if (ahead > 0 && ahead < STOP_MARGIN) {
+          blocked = true;
+          break;
+        }
+      }
+      if (!blocked) {
+        car.dist += car.dir * car.speed * dt;
+        if (car.dist >= maxDist) {
+          car.dist = maxDist;
+          car.dir = -1;
+        } else if (car.dist <= 0) {
+          car.dist = 0;
+          car.dir = 1;
+        }
+      }
+
+      const i0 = THREE.MathUtils.clamp(Math.floor(car.dist), 0, maxDist - 1);
+      const i1 = i0 + 1;
+      const t = car.dist - i0;
       const p0 = samples[i0];
       const p1 = samples[i1];
       const x = THREE.MathUtils.lerp(p0.x, p1.x, t);
       const z = THREE.MathUtils.lerp(p0.z, p1.z, t);
       const y = groundHeight(x, z, flattenZones) + 0.1;
       car.group.position.set(x, y, z);
-      car.group.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z);
+      // face the direction of travel — reversed when driving the leg backwards
+      const facing = Math.atan2(p1.x - p0.x, p1.z - p0.z) + (car.dir < 0 ? Math.PI : 0);
+      car.group.rotation.y = facing;
     }
   }
 
@@ -578,6 +611,8 @@ export function decorateWorld(scene, spawnPos, districts, flattenZones) {
     group,
     update,
     roadSamples: samples,
+    cars,
+    trafficLights,
   };
 }
 
