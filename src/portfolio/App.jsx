@@ -13,17 +13,9 @@ import FloatingCompanion from './components/FloatingCompanion.jsx';
 import TrailConnector from './components/TrailConnector.jsx';
 
 export default function App() {
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem('portfolio-theme') || 'dark'
-  );
   const [muted, setMuted] = useState(
     () => localStorage.getItem('portfolio-muted') === 'true'
   );
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem('portfolio-theme', theme);
-  }, [theme]);
 
   useEffect(() => {
     localStorage.setItem('portfolio-muted', String(muted));
@@ -33,8 +25,6 @@ export default function App() {
     <div className="relative min-h-screen">
       <GlowOrbs />
       <Navbar
-        theme={theme}
-        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
         muted={muted}
         onToggleMuted={() => setMuted((m) => !m)}
       />

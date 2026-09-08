@@ -1,66 +1,30 @@
 @import 'tailwindcss';
 
 /* ---------- Theme variables ---------- */
-/* DARK — "Aurora": near-black sky with drifting emerald/cyan/fuchsia aurora
-   bands instead of a generic navy-gradient-with-stars look. */
-:root,
-:root[data-theme='dark'] {
-  --bg: #050409;
-  --bg-2: #08060f;
-  --surface: rgba(255, 255, 255, 0.07);
-  --surface-strong: rgba(255, 255, 255, 0.13);
-  --border: rgba(255, 255, 255, 0.14);
-  --border-strong: rgba(255, 255, 255, 0.3);
-  --text: #f1f5f3;
-  --text-muted: #a6b3ae;
-  --accent: #34d399;
-  --accent-2: #e879f9;
-  --accent-3: #38bdf8;
-  --accent-glow: rgba(52, 211, 153, 0.32);
-  --accent-2-glow: rgba(232, 121, 249, 0.28);
-  --chip-bg: rgba(255, 255, 255, 0.06);
-  --nav-bg: rgba(6, 5, 12, 0.55);
-  --orb-blue: rgba(56, 189, 248, 0.28);
-  --orb-violet: rgba(232, 121, 249, 0.24);
-  --orb-cyan: rgba(52, 211, 153, 0.22);
-  --card-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
-  --stars-opacity: 1;
-  --aurora-opacity: 0.5;
-  --bg-layers: radial-gradient(ellipse 90% 55% at 18% -10%, rgba(52, 211, 153, 0.14), transparent 60%),
-    radial-gradient(ellipse 80% 55% at 88% 4%, rgba(232, 121, 249, 0.12), transparent 62%),
-    radial-gradient(ellipse 75% 45% at 55% 105%, rgba(56, 189, 248, 0.12), transparent 65%),
-    linear-gradient(180deg, #050409 0%, #07050f 45%, #030307 100%);
-  color-scheme: dark;
-}
-
-/* LIGHT — "Sunlit Paper": warm ivory instead of a generic pastel-blue tint,
-   terracotta + deep teal + gold accents for an editorial, printed feel. */
-:root[data-theme='light'] {
-  --bg: #faf6ee;
-  --bg-2: #f3ebdd;
-  --accent-3: #c9973f;
-  --stars-opacity: 0;
-  --aurora-opacity: 0;
-  --bg-layers: radial-gradient(ellipse 70% 50% at 85% -5%, rgba(209, 96, 61, 0.15), transparent 60%),
-    radial-gradient(ellipse 65% 48% at 6% 18%, rgba(31, 111, 92, 0.13), transparent 65%),
-    radial-gradient(ellipse 55% 40% at 50% 108%, rgba(201, 151, 63, 0.12), transparent 65%),
-    linear-gradient(180deg, #faf6ee, #f3ebdd);
-  --surface: rgba(255, 255, 255, 0.55);
-  --surface-strong: rgba(255, 255, 255, 0.82);
-  --border: rgba(60, 40, 20, 0.1);
-  --border-strong: rgba(60, 40, 20, 0.2);
-  --text: #241d15;
-  --text-muted: #6c5d4d;
-  --accent: #d1603d;
-  --accent-2: #1f6f5c;
-  --accent-glow: rgba(209, 96, 61, 0.2);
-  --accent-2-glow: rgba(31, 111, 92, 0.16);
-  --chip-bg: rgba(255, 255, 255, 0.55);
-  --nav-bg: rgba(250, 246, 238, 0.7);
-  --orb-blue: rgba(31, 111, 92, 0.12);
-  --orb-violet: rgba(209, 96, 61, 0.12);
-  --orb-cyan: rgba(201, 151, 63, 0.12);
-  --card-shadow: 0 20px 50px rgba(90, 60, 30, 0.1);
+/* "Field Notes" — a single, flat, editorial look inspired by
+   robbowen.digital: pale blue-white paper, deep navy ink, a bright violet
+   accent with a soft sky-blue second accent, set in the serif "Bitter". */
+:root {
+  --bg: #f4f9fc;
+  --bg-2: #e9f2f7;
+  --surface: rgba(15, 27, 97, 0.045);
+  --surface-strong: rgba(15, 27, 97, 0.09);
+  --border: rgba(15, 27, 97, 0.14);
+  --border-strong: rgba(15, 27, 97, 0.28);
+  --text: #0f1b61;
+  --text-muted: #5b6591;
+  --accent: #7f00e0;
+  --accent-2: #2e9fc9;
+  --accent-3: #b98ce8;
+  --accent-glow: rgba(127, 0, 224, 0.16);
+  --accent-2-glow: rgba(46, 159, 201, 0.16);
+  --chip-bg: rgba(15, 27, 97, 0.05);
+  --nav-bg: rgba(244, 249, 252, 0.78);
+  --orb-blue: rgba(46, 159, 201, 0.16);
+  --orb-violet: rgba(127, 0, 224, 0.13);
+  --orb-cyan: rgba(170, 220, 236, 0.4);
+  --card-shadow: 0 20px 50px rgba(15, 27, 97, 0.09);
+  --bg-layers: linear-gradient(180deg, #f4f9fc 0%, #eef5f9 60%, #e9f2f7 100%);
   color-scheme: light;
 }
 
@@ -70,7 +34,7 @@ html {
 
 body {
   margin: 0;
-  font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  font-family: 'Bitter', 'Georgia', serif;
   background: var(--bg-layers) var(--bg);
   background-attachment: fixed;
   color: var(--text);
@@ -78,102 +42,39 @@ body {
   overflow-x: hidden;
 }
 
-/* starfield — three parallax dot layers, dark mode only */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: var(--stars-opacity);
-  transition: opacity 0.6s ease;
-  background-image:
-    radial-gradient(1.2px 1.2px at 22px 34px, rgba(255, 255, 255, 0.9), transparent 100%),
-    radial-gradient(1px 1px at 120px 90px, rgba(190, 210, 255, 0.7), transparent 100%),
-    radial-gradient(1.6px 1.6px at 200px 40px, rgba(255, 255, 255, 0.55), transparent 100%),
-    radial-gradient(1px 1px at 70px 150px, rgba(170, 200, 255, 0.6), transparent 100%),
-    radial-gradient(1.3px 1.3px at 250px 180px, rgba(255, 240, 255, 0.65), transparent 100%),
-    radial-gradient(0.8px 0.8px at 160px 220px, rgba(255, 255, 255, 0.5), transparent 100%);
-  background-size: 280px 260px;
-  animation: stars-twinkle 7s ease-in-out infinite alternate;
-}
-
-@keyframes stars-twinkle {
-  from {
-    opacity: calc(var(--stars-opacity) * 0.55);
-  }
-  to {
-    opacity: var(--stars-opacity);
-  }
-}
-
-/* aurora ribbon — slow-drifting conic-gradient band, screen-blended so it
-   glows over the starfield instead of sitting as a flat tinted shape;
-   opacity is zeroed out entirely in light mode via --aurora-opacity */
-body::after {
-  content: '';
-  position: fixed;
-  inset: -15% -20% auto -20%;
-  height: 65vh;
-  z-index: 0;
-  pointer-events: none;
-  opacity: var(--aurora-opacity);
-  transition: opacity 0.6s ease;
-  background: conic-gradient(
-    from 200deg at 50% 20%,
-    rgba(52, 211, 153, 0) 0deg,
-    rgba(52, 211, 153, 0.4) 60deg,
-    rgba(56, 189, 248, 0.35) 140deg,
-    rgba(232, 121, 249, 0.38) 220deg,
-    rgba(52, 211, 153, 0) 300deg
-  );
-  filter: blur(90px) saturate(160%);
-  mix-blend-mode: screen;
-  animation: aurora-drift 24s ease-in-out infinite alternate;
-}
-
-@keyframes aurora-drift {
-  0% {
-    transform: translateX(-5%) translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateX(5%) translateY(2%) rotate(5deg);
-  }
-  100% {
-    transform: translateX(-3%) translateY(-2%) rotate(-4deg);
-  }
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: 'Bitter', 'Georgia', serif;
+  font-weight: 600;
 }
 
 /* ---------- Reusable pieces ---------- */
-/* spatial (visionOS-style) glass: deep blur + saturation boost, hairline
-   border, top-edge specular highlight, layered soft depth shadows */
+/* "paper card" — flat off-white surface, hairline navy/violet border, soft
+   low shadow. No blur, no glow — an editorial, printed feel over glassy. */
 .glass {
   position: relative;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03) 50%),
-    var(--surface);
+  background: rgba(255, 255, 255, 0.6);
   border: 1px solid var(--border);
-  backdrop-filter: blur(30px) saturate(170%);
-  -webkit-backdrop-filter: blur(30px) saturate(170%);
-  box-shadow: 0 32px 70px rgba(0, 0, 0, 0.4), 0 4px 18px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-  transition: background 0.5s ease, border-color 0.5s ease;
+  box-shadow: var(--card-shadow);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .glass-hover {
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.35s ease, box-shadow 0.35s ease, background 0.5s ease;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 .glass-hover:hover {
-  transform: translateY(-6px) scale(1.008);
-  border-color: var(--border-strong);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05) 50%),
-    var(--surface-strong);
-  box-shadow: 0 44px 90px rgba(0, 0, 0, 0.45), 0 0 40px var(--accent-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-6px);
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 30px 60px rgba(15, 27, 97, 0.14);
 }
 
 .glow-text {
-  text-shadow: 0 0 40px var(--accent-glow), 0 2px 24px rgba(0, 0, 0, 0.3);
+  text-shadow: none;
 }
 
 .gradient-text {
@@ -213,52 +114,41 @@ body::after {
 }
 
 .btn-primary {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.1) 55%),
-    linear-gradient(120deg, rgba(142, 197, 255, 0.35), rgba(192, 179, 255, 0.35));
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: var(--text);
-  backdrop-filter: blur(20px) saturate(170%);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.3), 0 0 26px var(--accent-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+  box-shadow: 0 8px 22px var(--accent-glow);
   transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
 }
 .btn-primary:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35), 0 0 40px var(--accent-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px var(--accent-glow);
+  filter: brightness(1.08);
 }
 
 .btn-secondary {
-  background: var(--surface);
+  background: transparent;
   border: 1px solid var(--border-strong);
   color: var(--text);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 .btn-secondary:hover {
   transform: translateY(-2px);
   border-color: var(--accent);
-  box-shadow: 0 0 25px var(--accent-glow);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .skill-chip {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
-    var(--chip-bg);
+  background: var(--chip-bg);
   border: 1px solid var(--border);
   color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .skill-chip:hover {
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-3px);
   border-color: var(--accent);
-  box-shadow: 0 0 22px var(--accent-glow);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .nav-link {

@@ -9,8 +9,8 @@ const LINKS = [
   ['Contact', '#contact'],
 ];
 
-// Floating spatial pill — detached from the page edge, visionOS style.
-export default function Navbar({ theme, onToggleTheme, muted, onToggleMuted }) {
+// Floating pill nav — flat paper card, no theme toggle (single light look).
+export default function Navbar({ muted, onToggleMuted }) {
   return (
     <motion.header
       initial={{ y: -60, opacity: 0 }}
@@ -42,13 +42,6 @@ export default function Navbar({ theme, onToggleTheme, muted, onToggleMuted }) {
             className="hidden lg:grid btn-secondary w-9 h-9 rounded-full place-items-center text-base cursor-pointer"
           >
             {muted ? '🔇' : '🔊'}
-          </button>
-          <button
-            onClick={onToggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="btn-secondary w-9 h-9 rounded-full grid place-items-center text-base cursor-pointer"
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
           </button>
           <a
             href="/game.html"
