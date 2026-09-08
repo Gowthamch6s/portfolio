@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import './style.css';
 import { createRenderer, createCamera, setupResize, createStarfield } from './core/SceneSetup.js';
 import { buildSolarSystem, updateSolarSystem } from './map/SolarSystemScene.js';
-import { buildTinyPlanet, placeContentNodes } from './planet/TinyPlanetWorld.js';
+import { buildTinyPlanet, decoratePlanet, placeContentNodes } from './planet/TinyPlanetWorld.js';
 import { CharacterController } from './character/CharacterController.js';
 import { PlanetCamera } from './character/PlanetCamera.js';
 import { HUD } from './ui/HUD.js';
@@ -80,9 +80,10 @@ function getOrBuildPlanetScene(data) {
   scene.add(sunLight);
 
   const radius = 20;
-  const ground = buildTinyPlanet(data, radius);
-  scene.add(ground);
-  const nodes = placeContentNodes(ground, data.nodes, radius, data.color);
+  const planetHandle = buildTinyPlanet(data, radius);
+  scene.add(planetHandle.group);
+  const nodes = placeContentNodes(planetHandle.group, data.nodes, radius, data.color);
+  decoratePlanet(planetHandle, radius, nodes.map((n) => n.dir), data.color);
 
   const character = new CharacterController(scene, radius);
   character.spawnAt(new THREE.Vector3(0, 1, 0.3));
