@@ -29,24 +29,34 @@ const ADDITIONAL = [
 ];
 
 export default function Skills() {
-  // The permit unfolds open as it scrolls into view and folds back closed
-  // if you scroll away in either direction — a real scroll-position-driven
-  // fold (not a one-time reveal), echoing the reference site's "scroll to
-  // unfold" folded-document effect.
+  // The lower half of the permit (the tool table + signature) unfolds
+  // open like a real paper flap as it scrolls into view, and folds back
+  // shut if you scroll away in either direction — a real scroll-position-
+  // driven fold, echoing the reference site's "scroll to unfold" effect.
+  //
+  // This is a clip-reveal from the fold line, NOT a 3D rotateX/perspective
+  // tilt — an earlier attempt rotated the whole card in 3D space, which
+  // read as the paper tipping backward and receding into the screen
+  // instead of a flap unfolding open. The card itself keeps its natural
+  // full-content footprint the whole time (so nothing below it jumps
+  // around as it opens/closes) — only the lower panel's visible content
+  // is clipped away below the crease while "closed". The header block
+  // above the fold line stays flat and static throughout; real paper
+  // doesn't warp.
   const foldRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: foldRef,
     offset: ['start end', 'end start'],
   });
-  // A single hinge motion continuously tied to scroll position — closed at
-  // both ends of the range, fully open only right at the midpoint — rather
-  // than an early open that then sits flat for most of the scroll (which
-  // a fast scroll/Page Down can jump straight past without ever showing
-  // the fold). This way there's no static plateau to skip: wherever you
-  // are in the range, the rotation is a direct function of scroll offset.
-  const foldRotate = useTransform(scrollYProgress, [0, 0.5, 1], [-70, 0, -70]);
-  const foldScaleY = useTransform(scrollYProgress, [0, 0.5, 1], [0.55, 1, 0.55]);
-  const foldOpacity = useTransform(scrollYProgress, [0, 0.08, 0.5, 0.92, 1], [0, 0.5, 1, 0.5, 0]);
+  // Percent of the lower panel still folded shut below the crease — 100 at
+  // both ends of the range, 0 (fully open) at the exact midpoint, so
+  // there's no static "already open" plateau a fast scroll could skip
+  // straight over.
+  const hiddenPct = useTransform(scrollYProgress, [0, 0.5, 1], [100, 0, 100]);
+  const foldClip = useTransform(hiddenPct, (v) => `inset(0px 0px ${v}% 0px)`);
+  const creaseOpen = useTransform(hiddenPct, (v) => Math.max(0, 1 - v / 55));
+  const creaseShadow = useTransform(creaseOpen, (s) => `0 ${s * 3}px ${s * 10}px rgba(38, 48, 31, ${s * 0.3})`);
+  const hintOpacity = useTransform(hiddenPct, (v) => Math.max(0, (v - 60) / 40));
 
   return (
     <section id="skills" className="relative py-24 scroll-mt-20">
@@ -57,41 +67,46 @@ export default function Skills() {
           </h2>
         </Reveal>
 
-        <div style={{ perspective: 1600 }}>
-          <motion.div
-            ref={foldRef}
-            style={{
-              rotateX: foldRotate,
-              scaleY: foldScaleY,
-              opacity: foldOpacity,
-              transformOrigin: 'top center',
-            }}
-          >
-            <div className="permit-doc rounded-sm p-6 sm:p-10">
-            <div className="flex flex-wrap items-start justify-between gap-4 text-[10px] tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
-              <span>Form 10-26 · OMB No. 0826-2026</span>
-              <span>Dept. of Engineering — Agentic Division</span>
+        <div className="permit-doc rounded-sm p-6 sm:p-10" ref={foldRef}>
+          {/* header block — stays flat and static; only the content below
+              the crease unfolds */}
+          <div className="flex flex-wrap items-start justify-between gap-4 text-[10px] tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
+            <span>Form 10-26 · OMB No. 0826-2026</span>
+            <span>Dept. of Engineering — Agentic Division</span>
+          </div>
+
+          <h3 className="font-display text-2xl sm:text-3xl mt-4">My Tools of the Trade</h3>
+
+          <div className="mt-6 grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+            <div>
+              <span className="uppercase tracking-widest text-[10px]" style={{ color: 'var(--text-muted)' }}>Permittee</span>
+              <p className="font-semibold">Gowtham Sai Chimmana</p>
             </div>
-
-            <h3 className="font-display text-2xl sm:text-3xl mt-4">My Tools of the Trade</h3>
-
-            <div className="mt-6 grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-              <div>
-                <span className="uppercase tracking-widest text-[10px]" style={{ color: 'var(--text-muted)' }}>Permittee</span>
-                <p className="font-semibold">Gowtham Sai Chimmana</p>
-              </div>
-              <div>
-                <span className="uppercase tracking-widest text-[10px]" style={{ color: 'var(--text-muted)' }}>Party of</span>
-                <p className="font-semibold">1 (+ agents)</p>
-              </div>
-              <div className="sm:col-span-2 mt-1">
-                <span className="uppercase tracking-widest text-[10px]" style={{ color: 'var(--text-muted)' }}>Endorsements</span>
-                <p className="font-semibold leading-snug">
-                  Agentic AI &middot; LLM Engineering &middot; RAG Systems &middot; Model Training &middot; Full-Stack Delivery
-                </p>
-              </div>
+            <div>
+              <span className="uppercase tracking-widest text-[10px]" style={{ color: 'var(--text-muted)' }}>Party of</span>
+              <p className="font-semibold">1 (+ agents)</p>
             </div>
+            <div className="sm:col-span-2 mt-1">
+              <span className="uppercase tracking-widest text-[10px]" style={{ color: 'var(--text-muted)' }}>Endorsements</span>
+              <p className="font-semibold leading-snug">
+                Agentic AI &middot; LLM Engineering &middot; RAG Systems &middot; Model Training &middot; Full-Stack Delivery
+              </p>
+            </div>
+          </div>
 
+          {/* fold crease — a physical hinge line the panel below unfolds
+              from, with a shadow that deepens as it opens */}
+          <div className="relative">
+            <motion.div className="mt-8 h-px" style={{ background: 'var(--border-strong)', boxShadow: creaseShadow }} />
+            <motion.p
+              className="hand-accent text-lg absolute left-0 top-4"
+              style={{ color: 'var(--accent-2)', opacity: hintOpacity }}
+            >
+              scroll to unfold ↓
+            </motion.p>
+          </div>
+
+          <motion.div style={{ clipPath: foldClip }}>
             <div className="mt-8 overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse min-w-[560px]">
                 <thead>
@@ -136,7 +151,6 @@ export default function Skills() {
               <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
                 Signature of Permittee
               </span>
-            </div>
             </div>
           </motion.div>
         </div>
