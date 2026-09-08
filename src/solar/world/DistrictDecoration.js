@@ -93,6 +93,27 @@ function mergeGeometries(a, b) {
   return merged;
 }
 
+// Wind-swaying grass material: displaces each blade's upper vertices with a
+// per-instance-phased sine wave so the whole field ripples like real grass
+// instead of standing perfectly rigid.
+function buildWindGrassMaterial() {
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, side: THREE.DoubleSide, flatShading: true });
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = { value: 0 };
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        '#include <common>',
+        `#include <common>\nuniform float uTime;\nattribute float aPhase;`
+      )
+      .replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>\nfloat windLift = clamp(position.y / 0.45, 0.0, 1.0);\nfloat sway = sin(uTime * 1.6 + aPhase) * windLift * windLift * 0.16;\ntransformed.x += sway;\ntransformed.z += sway * 0.7;`
+      );
+    mat.userData.shader = shader;
+  };
+  return mat;
+}
+
 function buildTree(rand) {
   const group = new THREE.Group();
   const trunkH = 1.1 + rand() * 0.7;
@@ -124,13 +145,14 @@ function buildLampPost(rand) {
   const arm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.06), lampPoleMat);
   arm.position.set(0.25, h - 0.1, 0);
   group.add(arm);
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 10), lampBulbMat);
+  const bulbMat = lampBulbMat.clone();
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 10), bulbMat);
   bulb.position.set(0.5, h - 0.16, 0);
   group.add(bulb);
-  const light = new THREE.PointLight(0xffcf6b, 1.4, 9, 2);
+  const light = new THREE.PointLight(0xffcf6b, 2.2, 11, 2);
   light.position.copy(bulb.position);
   group.add(light);
-  return group;
+  return { group, bulbMat, light, phase: rand() * Math.PI * 2 };
 }
 
 // Canvas-painted glowing window grid — wrapped around all four sides of a
@@ -178,24 +200,115 @@ function buildBuilding(rand, accentColor) {
   const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bodyMat);
   body.position.y = h / 2;
   body.castShadow = true;
+  body.receiveShadow = true;
   group.add(body);
 
+  let beaconMat = null;
   // rooftop antenna + blinking beacon on taller towers
   if (h > 18) {
     const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 3, 5), lampPoleMat);
     antenna.position.y = h + 1.5;
     group.add(antenna);
-    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff5a4a, emissive: 0xff5a4a, emissiveIntensity: 2 }));
+    beaconMat = new THREE.MeshStandardMaterial({ color: 0xff5a4a, emissive: 0xff5a4a, emissiveIntensity: 2 });
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), beaconMat);
     beacon.position.y = h + 3;
     group.add(beacon);
   }
 
+  return { group, beaconMat, beaconPhase: rand() * Math.PI * 2 };
+}
+
+// Simple low-poly car — box body, cabin, four wheels, emissive head/tail
+// lights — driven along the road by RoadTraffic.
+function buildCar(rand) {
+  const bodyColor = new THREE.Color().setHSL(rand(), 0.55, 0.42 + rand() * 0.15);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.4, metalness: 0.3 });
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x1a2230, roughness: 0.2, metalness: 0.4 });
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x101215, roughness: 0.8 });
+  const headlightMat = new THREE.MeshStandardMaterial({ color: 0xfff6cf, emissive: 0xfff6cf, emissiveIntensity: 2 });
+  const taillightMat = new THREE.MeshStandardMaterial({ color: 0xff3b30, emissive: 0xff3b30, emissiveIntensity: 1.8 });
+
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.42, 2.0), bodyMat);
+  body.position.y = 0.36;
+  body.castShadow = true;
+  group.add(body);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.34, 1.0), glassMat);
+  cabin.position.set(0, 0.72, -0.15);
+  group.add(cabin);
+
+  const wheelGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.18, 10);
+  wheelGeo.rotateZ(Math.PI / 2);
+  for (const [wx, wz] of [
+    [0.48, 0.65],
+    [-0.48, 0.65],
+    [0.48, -0.65],
+    [-0.48, -0.65],
+  ]) {
+    const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+    wheel.position.set(wx, 0.22, wz);
+    group.add(wheel);
+  }
+
+  const headlightL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.04), headlightMat);
+  headlightL.position.set(0.32, 0.38, 1.0);
+  group.add(headlightL);
+  const headlightR = headlightL.clone();
+  headlightR.position.x = -0.32;
+  group.add(headlightR);
+  const taillightL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.04), taillightMat);
+  taillightL.position.set(0.32, 0.38, -1.0);
+  group.add(taillightL);
+  const taillightR = taillightL.clone();
+  taillightR.position.x = -0.32;
+  group.add(taillightR);
+
   return group;
+}
+
+// Traffic-light fixture: pole + arm + red/yellow/green head. `setState(0|1|2)`
+// lights exactly one lamp (green/yellow/red) at a time, matching a normal
+// signal cycle, and drives a real PointLight so it actually illuminates the
+// junction, not just glows in place.
+function buildTrafficLight() {
+  const group = new THREE.Group();
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 2.6, 6), lampPoleMat);
+  pole.position.y = 1.3;
+  pole.castShadow = true;
+  group.add(pole);
+
+  const housing = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.85, 0.24), new THREE.MeshStandardMaterial({ color: 0x1c1f26, roughness: 0.6 }));
+  housing.position.y = 2.85;
+  group.add(housing);
+
+  const colors = [0x3ddc6b, 0xffd23d, 0xff453a];
+  const lamps = colors.map((color, i) => {
+    const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.08 });
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), mat);
+    lamp.position.set(0, 2.85 + 0.26 - i * 0.27, 0.14);
+    group.add(lamp);
+    return mat;
+  });
+
+  const light = new THREE.PointLight(colors[0], 0, 8, 2);
+  light.position.set(0, 2.85, 0.3);
+  group.add(light);
+
+  function setState(state) {
+    lamps.forEach((mat, i) => {
+      mat.emissiveIntensity = i === state ? 2.4 : 0.08;
+    });
+    light.color.setHex(colors[state]);
+    light.intensity = 2.5;
+  }
+  setState(0);
+
+  return { group, setState };
 }
 
 // A road connecting waypoints ({x,z} world positions), following the actual
 // ground height along the way so it never floats or clips into a hill.
-function buildRoadMesh(waypoints, width = 4.2) {
+function buildRoadMesh(waypoints, flattenZones, width = 4.2) {
   const positions = [];
   const uvs = [];
   const indices = [];
@@ -221,7 +334,7 @@ function buildRoadMesh(waypoints, width = 4.2) {
     const len = Math.hypot(dirX, dirZ) || 1;
     const rightX = -dirZ / len;
     const rightZ = dirX / len;
-    const y = groundHeight(p.x, p.z, []) + 0.08;
+    const y = groundHeight(p.x, p.z, flattenZones) + 0.08;
 
     positions.push(p.x - (rightX * width) / 2, y, p.z - (rightZ * width) / 2);
     positions.push(p.x + (rightX * width) / 2, y, p.z + (rightZ * width) / 2);
@@ -265,19 +378,27 @@ function distanceToPolyline(x, z, waypoints) {
   return min;
 }
 
-// Roads connecting spawn -> every district in order (a simple hub-and-spoke
-// route), lined with street lamps, plus dense per-district scatter
-// (grass/trees/rocks off the road) and a glass-tower skyline per district.
-export function decorateWorld(scene, spawnPos, districts) {
+// Roads connecting spawn -> every district in sequence, lined with street
+// lamps and traffic-light junctions at each district entrance, plus dense
+// per-district scatter (grass/trees/rocks off the road) and a glass-tower
+// skyline per district. `flattenZones` must be the SAME list the terrain
+// mesh was built with, or every ground-anchored prop below would sit at the
+// raw noisy height instead of the flattened terrain and float/sink.
+//
+// Returns everything main.js needs to animate: grass wind shader, blinking
+// rooftop beacons and street lamps, traffic-light cycling, and the road
+// `samples` polyline + junction indices for cars to drive along.
+export function decorateWorld(scene, spawnPos, districts, flattenZones) {
   const group = new THREE.Group();
   scene.add(group);
 
   const waypoints = [spawnPos, ...districts.map((d) => d.position)];
-  const { mesh: roadMesh, samples } = buildRoadMesh(waypoints);
+  const { mesh: roadMesh, samples } = buildRoadMesh(waypoints, flattenZones);
   group.add(roadMesh);
   const roadWaypoints = waypoints;
 
   // street lamps every ~14 samples along the road, alternating sides
+  const lamps = [];
   const lampRand = makeRng('lamps');
   for (let i = 4; i < samples.length - 2; i += 14) {
     const p = samples[i];
@@ -291,16 +412,50 @@ export function decorateWorld(scene, spawnPos, districts) {
     const lampX = p.x + rightX * 3.4;
     const lampZ = p.z + rightZ * 3.4;
     const lamp = buildLampPost(lampRand);
-    lamp.position.set(lampX, groundHeight(lampX, lampZ, []), lampZ);
-    lamp.rotation.y = Math.atan2(rightX, rightZ);
-    group.add(lamp);
+    lamp.group.position.set(lampX, groundHeight(lampX, lampZ, flattenZones), lampZ);
+    lamp.group.rotation.y = Math.atan2(rightX, rightZ);
+    group.add(lamp.group);
+    lamps.push(lamp);
   }
 
-  // dense grass across the whole terrain via InstancedMesh
+  // a traffic-light junction at every district entrance along the road
+  const trafficLights = [];
+  for (let i = 1; i < waypoints.length; i++) {
+    const prev = waypoints[i - 1];
+    const dirX = waypoints[i].x - prev.x;
+    const dirZ = waypoints[i].z - prev.z;
+    const len = Math.hypot(dirX, dirZ) || 1;
+    const rightX = -dirZ / len;
+    const rightZ = dirX / len;
+    const lx = waypoints[i].x + rightX * 3.6;
+    const lz = waypoints[i].z + rightZ * 3.6;
+    const tl = buildTrafficLight();
+    tl.group.position.set(lx, groundHeight(lx, lz, flattenZones), lz);
+    tl.group.rotation.y = Math.atan2(-rightX, -rightZ);
+    group.add(tl.group);
+    trafficLights.push(tl);
+  }
+
+  // a handful of cars patrolling the whole road loop
+  const cars = [];
+  const carRand = makeRng('cars');
+  const totalCars = 6;
+  for (let i = 0; i < totalCars; i++) {
+    const carGroup = buildCar(carRand);
+    group.add(carGroup);
+    cars.push({
+      group: carGroup,
+      dist: (i / totalCars) * samples.length,
+      speed: 6 + carRand() * 3,
+    });
+  }
+
+  // dense grass across the whole terrain via InstancedMesh, wind-swayed
   const bladeGeo = buildBladeGeometry();
-  const bladeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, side: THREE.DoubleSide, flatShading: true });
+  const bladeMat = buildWindGrassMaterial();
   const bladeCount = 16000;
   const grass = new THREE.InstancedMesh(bladeGeo, bladeMat, bladeCount);
+  const phases = new Float32Array(bladeCount);
   const dummy = new THREE.Object3D();
   const worldRand = makeRng('world-grass');
   const halfSize = 195;
@@ -311,19 +466,23 @@ export function decorateWorld(scene, spawnPos, districts) {
     const x = (worldRand() - 0.5) * halfSize * 2;
     const z = (worldRand() - 0.5) * halfSize * 2;
     if (distanceToPolyline(x, z, roadWaypoints) < 2) continue;
-    const y = groundHeight(x, z, []);
+    const y = groundHeight(x, z, flattenZones);
     dummy.position.set(x, y, z);
     dummy.rotation.y = worldRand() * Math.PI * 2;
     const s = 0.8 + worldRand() * 0.5;
     dummy.scale.set(s, s * (0.9 + worldRand() * 0.3), s);
     dummy.updateMatrix();
     grass.setMatrixAt(placed, dummy.matrix);
+    phases[placed] = worldRand() * Math.PI * 2;
     placed++;
   }
   grass.count = placed;
   grass.instanceMatrix.needsUpdate = true;
   grass.receiveShadow = true;
+  grass.geometry.setAttribute('aPhase', new THREE.InstancedBufferAttribute(phases, 1));
   group.add(grass);
+
+  const beacons = [];
 
   for (const district of districts) {
     const rand = makeRng(district.id);
@@ -336,7 +495,7 @@ export function decorateWorld(scene, spawnPos, districts) {
       const x = cx + Math.cos(a) * r;
       const z = cz + Math.sin(a) * r;
       if (distanceToPolyline(x, z, roadWaypoints) < 2.2) continue;
-      const y = groundHeight(x, z, []);
+      const y = groundHeight(x, z, flattenZones);
       const deco3d = rand() < 0.65 ? buildTree(rand) : new THREE.Mesh(new THREE.DodecahedronGeometry(0.4 + rand() * 0.7, 0), rockMat);
       deco3d.position.set(x, y, z);
       deco3d.rotation.y = rand() * Math.PI * 2;
@@ -357,20 +516,74 @@ export function decorateWorld(scene, spawnPos, districts) {
       const forward = district.clearRadius * (0.45 + rand() * 0.4);
       const x = cx + awayDirX * forward + perpX * spread;
       const z = cz + awayDirZ * forward + perpZ * spread;
-      const y = groundHeight(x, z, []);
-      const building = buildBuilding(rand, district.color);
+      const y = groundHeight(x, z, flattenZones);
+      const { group: building, beaconMat, beaconPhase } = buildBuilding(rand, district.color);
       building.position.set(x, y, z);
       building.rotation.y = rand() * Math.PI * 2;
       group.add(building);
+      if (beaconMat) beacons.push({ mat: beaconMat, phase: beaconPhase });
     }
   }
 
-  return group;
+  let elapsed = 0;
+  let signalTimer = 0;
+  let signalState = 0; // 0 green, 1 yellow, 2 red
+  const SIGNAL_DURATIONS = [5, 1.2, 4.5];
+
+  function update(dt) {
+    elapsed += dt;
+
+    // wind-swaying grass
+    if (bladeMat.userData.shader) bladeMat.userData.shader.uniforms.uTime.value = elapsed;
+
+    // blinking rooftop beacons — a sharp on/off blink, not a smooth pulse
+    for (const b of beacons) {
+      b.mat.emissiveIntensity = Math.sin(elapsed * 3 + b.phase) > 0.4 ? 2.4 : 0.1;
+    }
+
+    // street lamps flicker very subtly so they read as "on" rather than static
+    for (const l of lamps) {
+      const flicker = 0.9 + 0.1 * Math.sin(elapsed * 5 + l.phase);
+      l.bulbMat.emissiveIntensity = 2.2 * flicker;
+      l.light.intensity = 2.2 * flicker;
+    }
+
+    // shared traffic-light cycle: green -> yellow -> red -> green
+    signalTimer += dt;
+    if (signalTimer >= SIGNAL_DURATIONS[signalState]) {
+      signalTimer = 0;
+      signalState = (signalState + 1) % 3;
+      for (const tl of trafficLights) tl.setState(signalState);
+    }
+
+    // cars looping along the whole road polyline
+    const n = samples.length;
+    for (const car of cars) {
+      car.dist += car.speed * dt;
+      while (car.dist >= n) car.dist -= n;
+      const i0 = Math.floor(car.dist) % n;
+      const i1 = (i0 + 1) % n;
+      const t = car.dist - Math.floor(car.dist);
+      const p0 = samples[i0];
+      const p1 = samples[i1];
+      const x = THREE.MathUtils.lerp(p0.x, p1.x, t);
+      const z = THREE.MathUtils.lerp(p0.z, p1.z, t);
+      const y = groundHeight(x, z, flattenZones) + 0.1;
+      car.group.position.set(x, y, z);
+      car.group.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z);
+    }
+  }
+
+  return {
+    group,
+    update,
+    roadSamples: samples,
+  };
 }
 
 // Places each district's content nodes as glowing monuments arranged in a
 // small ring around the district center. Returns [{ mesh, worldPos, node }].
-export function placeDistrictNodes(scene, district) {
+export function placeDistrictNodes(scene, district, flattenZones) {
   const placed = [];
   const { x: cx, z: cz } = district.position;
   const n = district.nodes.length;
@@ -379,7 +592,7 @@ export function placeDistrictNodes(scene, district) {
     const r = district.clearRadius * 0.4;
     const x = cx + Math.cos(angle) * r;
     const z = cz + Math.sin(angle) * r;
-    const y = groundHeight(x, z, []);
+    const y = groundHeight(x, z, flattenZones);
 
     const monument = new THREE.Group();
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0x1c2530, roughness: 0.6 }));

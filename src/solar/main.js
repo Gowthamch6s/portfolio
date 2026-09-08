@@ -55,11 +55,11 @@ scene.add(worldRoot);
 
 const flattenZones = buildFlattenZones();
 worldRoot.add(buildTerrain(420, 180, flattenZones));
-decorateWorld(worldRoot, SPAWN_POSITION, DISTRICTS);
+const worldDecor = decorateWorld(worldRoot, SPAWN_POSITION, DISTRICTS, flattenZones);
 
 const allNodes = [];
 for (const district of DISTRICTS) {
-  const nodes = placeDistrictNodes(worldRoot, district);
+  const nodes = placeDistrictNodes(worldRoot, district, flattenZones);
   for (const n of nodes) allNodes.push({ ...n, district });
 }
 
@@ -208,6 +208,7 @@ function tick() {
     character.update(dt, { forward: input.forward, turn: input.turn, jump: input.consumeJump(), boost: input.boost });
   }
   lifeForms.update(dt, character.position);
+  worldDecor.update(dt);
   worldCamera.update(dt, character);
   hud.updateMap(SPAWN_POSITION, character.position, character.heading);
 
